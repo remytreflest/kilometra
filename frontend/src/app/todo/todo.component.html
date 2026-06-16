@@ -1,0 +1,68 @@
+<div class="min-h-screen bg-slate-50 text-slate-900">
+  <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mb-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h1 class="text-3xl font-semibold text-slate-900">Michelin Todo</h1>
+      <p class="mt-2 text-sm text-slate-600">
+        Liste des todos connectée à l’API Node/Express/Prisma.
+      </p>
+
+      <form class="mt-6 flex flex-col gap-3 sm:flex-row" (ngSubmit)="addTodo()">
+        <input
+          type="text"
+          placeholder="Nouvelle tâche"
+          [(ngModel)]="newTitle"
+          name="title"
+          class="min-w-0 flex-1 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+        />
+        <button
+          type="submit"
+          class="inline-flex items-center justify-center rounded-2xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700"
+        >
+          Ajouter
+        </button>
+      </form>
+
+      <div *ngIf="error" class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {{ error }}
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <div *ngIf="loading" class="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600 shadow-sm">
+        Chargement des todos…
+      </div>
+
+      <div *ngIf="!loading && todos.length === 0" class="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600 shadow-sm">
+        Aucun todo disponible pour le moment.
+      </div>
+
+      <ul class="space-y-4">
+        <li *ngFor="let todo of todos" class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="text-lg font-medium text-slate-900" [class.line-through]="todo.done">{{ todo.title }}</p>
+              <p class="mt-1 text-sm text-slate-500">Créé le {{ todo.createdAt | date:'medium' }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="rounded-2xl border px-4 py-2 text-sm font-medium transition hover:bg-slate-100"
+                [class.border-sky-500]="todo.done"
+                (click)="toggleDone(todo)"
+              >
+                {{ todo.done ? 'Marquer comme non fait' : 'Marquer comme fait' }}
+              </button>
+              <button
+                type="button"
+                class="rounded-2xl border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                (click)="deleteTodo(todo.id)"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
