@@ -163,6 +163,15 @@ docker exec api npx prisma migrate deploy
 
 ---
 
+## CI / CD
+
+Le backend est couvert par une action GitHub située dans `.github/workflows/test.yml`.
+Cette workflow installe les dépendances backend, construit le projet et exécute les tests unitaires.
+
+Le déploiement est prévu dans `.github/workflows/deploy.yml` et doit inclure le lancement des migrations avec `npx prisma migrate deploy` sur le serveur cible.
+
+---
+
 ## Documentation Swagger / OpenAPI
 
 L'API expose sa documentation Swagger sur `/api/docs` (Swagger UI). **Toute nouvelle route ou modification d'une route doit impérativement être répercutée et mise à jour dans la documentation Swagger.** Ne pas laisser la documentation obsolète.

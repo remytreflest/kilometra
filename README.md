@@ -40,10 +40,10 @@ ng serve
 
 ## CI/CD
 
-Workflows are expected under `.github/workflows/`:
+Workflows are configured under `.github/workflows/`:
 
-- `test.yml` for PRs and push checks (install, lint, build)
-- `deploy.yml` for building images, pushing to registry, SSH to VPS and running `docker-compose` on the server
+- `test.yml` runs on push and pull request to `main` and installs backend dependencies, builds the backend, and runs unit tests.
+- `deploy.yml` runs on push to `main` and deploys the API to a configured VPS, including `docker compose up -d` and `npx prisma migrate deploy` to apply migrations.
 
 Configure the following GitHub repository secrets for deploys:
 
@@ -51,8 +51,8 @@ Configure the following GitHub repository secrets for deploys:
 VPS_HOST
 VPS_USER
 VPS_SSH_KEY
-DOCKER_USERNAME (optional)
-DOCKER_PASSWORD (optional)
+DEPLOY_PATH
+VPS_PORT (optional)
 ```
 
 ## Next steps I can do for you
