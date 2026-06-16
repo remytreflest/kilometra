@@ -1,0 +1,45 @@
+# Node
+node_modules/
+
+# Builds
+dist/
+build/
+frontend/dist/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# Runtime env
+.env
+.env.*
+.env.local
+
+# Prisma
+/prisma/migrations/
+/.prisma/
+
+# Coverage
+coverage/
+coverage-final.json
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Misc
+*.tgz
+*.env.test
