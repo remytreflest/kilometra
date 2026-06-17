@@ -7,10 +7,200 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Todo {
-  id        String   @id @default(cuid())
-  title     String
-  done      Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Utilisateur {
+  id                   String    @id @default(uuid()) @db.Uuid
+  prenom               String    @db.VarChar(100)
+  nom                  String    @db.VarChar(100)
+  email                String    @unique @db.VarChar(255)
+  motDePasseHash       String    @db.VarChar(255)
+  stravaId             String?   @unique @db.VarChar(100)
+  stravaToken          String?
+  stravaRefreshToken   String?
+  stravaTokenExpiresAt DateTime?
+  departement          String    @db.VarChar(3)
+  region               String    @db.VarChar(100)
+  profile              String    @default("regulier") @db.VarChar(20)
+  dateInscription      DateTime  @default(now())
+  actif                Boolean   @default(true)
+
+  membreClubs         MembreClub[]
+  velos               Velo[]
+  avis                Avis[]
+  classementsMensuels ClassementMensuel[]
+  sorties             Sortie[]
+
+  @@map("utilisateur")
+}
+
+model Club {
+  id              String   @id @default(uuid()) @db.Uuid
+  nom             String   @db.VarChar(255)
+  departement     String   @db.VarChar(3)
+  region          String   @db.VarChar(100)
+  ville           String   @db.VarChar(100)
+  dateInscription DateTime @default(now())
+  actif           Boolean  @default(true)
+
+  membres             MembreClub[]
+  classementsMensuels ClassementMensuel[]
+
+  @@map("club")
+}
+
+// Table de liaison N:N utilisateur <-> club
+model MembreClub {
+  utilisateurId String   @db.Uuid
+  clubId        String   @db.Uuid
+  dateAdhesion  DateTime @default(now()) @db.Date
+  role          String   @default("membre") @db.VarChar(20)
+
+  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  club        Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@id([utilisateurId, clubId])
+  @@map("membre_club")
+}
+
+model Velo {
+  id            String  @id @default(uuid()) @db.Uuid
+  utilisateurId String  @db.Uuid
+  marque        String  @db.VarChar(100)
+  modele        String  @db.VarChar(100)
+  annee         Int
+  type          String   @db.VarChar(20)
+  valeurAchat   Decimal? @db.Decimal(8, 2)
+  actif         Boolean  @default(true)
+
+  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  materiels   Materiel[]
+
+  @@map("velo")
+}
+
+model Produit {
+  id          String   @id @default(uuid()) @db.Uuid
+  marque      String   @db.VarChar(100)
+  modele      String   @db.VarChar(150)
+  typeUsage   String   @db.VarChar(20)
+  prix        Decimal? @db.Decimal(8, 2)
+  estMichelin Boolean  @default(false)
+
+  materiels   Materiel[]
+  avis        Avis[]
+  recompenses Recompense[]
+
+  @@map("produit")
+}
+
+// Pneu physiquement monté sur un vélo — km_parcourus mis à jour via Strava
+model Materiel {
+  id               String   @id @default(uuid()) @db.Uuid
+  veloId           String   @db.Uuid
+  produitId        String   @db.Uuid
+  dateInstallation DateTime @default(now()) @db.Date
+  kmParcourus      Float    @default(0)
+  avisDemande      Boolean  @default(false)
+  actif            Boolean  @default(true)
+
+  velo    Velo    @relation(fields: [veloId], references: [id], onDelete: Cascade)
+  produit Produit @relation(fields: [produitId], references: [id])
+  avis    Avis?
+  sorties Sortie[]
+
+  @@map("materiel")
+}
+
+// 1 avis max par matériel, débloqué à 500 km (contrôlé par trigger DB)
+model Avis {
+  id            String   @id @default(uuid()) @db.Uuid
+  utilisateurId String   @db.Uuid
+  produitId     String   @db.Uuid
+  materielId    String   @unique @db.Uuid
+  noteAdherence   Int
+  noteConfort     Int
+  noteLongevite   Int
+  notePrixPerf    Int
+  noteRendement   Int?
+  noteGripMouille Int?
+  conditionsTest  String[]
+  commentaire     String
+  kmAuMoment      Float
+  dateAvis        DateTime @default(now())
+  valide          Boolean  @default(false)
+
+  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  produit     Produit     @relation(fields: [produitId], references: [id])
+  materiel    Materiel    @relation(fields: [materielId], references: [id])
+
+  @@map("avis")
+}
+
+// Recalculé chaque nuit — 1 entrée par user/mois/année/scope
+model ClassementMensuel {
+  id            String  @id @default(uuid()) @db.Uuid
+  utilisateurId String  @db.Uuid
+  clubId        String? @db.Uuid
+  mois          Int
+  annee         Int
+  scope         String  @db.VarChar(20)
+  totalKm       Float   @default(0)
+  position      Int     @default(0)
+  gagnant       Boolean @default(false)
+
+  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  club        Club?       @relation(fields: [clubId], references: [id], onDelete: SetNull)
+  recompense  Recompense?
+
+  @@unique([utilisateurId, mois, annee, scope])
+  @@map("classement_mensuel")
+}
+
+// Créée uniquement si gagnant=TRUE ET produit est_michelin=TRUE (contrôlé par trigger DB)
+model Recompense {
+  id               String    @id @default(uuid()) @db.Uuid
+  classementId     String    @unique @db.Uuid
+  produitId        String    @db.Uuid
+  statut           String    @default("attribuee") @db.VarChar(20)
+  dateAttribution  DateTime  @default(now())
+  dateExpedition   DateTime?
+  adresseLivraison String
+
+  classement ClassementMensuel @relation(fields: [classementId], references: [id])
+  produit    Produit           @relation(fields: [produitId], references: [id])
+
+  @@map("recompense")
+}
+
+// Activité cycliste (Strava ou manuelle) — source des scores par condition
+model Sortie {
+  id                String    @id @default(uuid()) @db.Uuid
+  utilisateurId     String    @db.Uuid
+  materielId        String?   @db.Uuid
+  stravaActivityId  String?   @unique @db.VarChar(100)
+  dateSortie        DateTime  @db.Date
+  distanceKm        Float
+  elevationM        Int       @default(0)
+  terrain           String    @db.VarChar(20)
+  surface           String    @db.VarChar(20)
+  pluie             Boolean   @default(false)
+  conditionKey      String    @db.VarChar(20)
+  crevaison         Boolean   @default(false)
+  satisfaction      Decimal?  @db.Decimal(3, 1)
+  scoreAdherence    Decimal?  @db.Decimal(3, 1)
+  scoreRendement    Decimal?  @db.Decimal(3, 1)
+  scoreDurabilite   Decimal?  @db.Decimal(3, 1)
+  scoreConfort      Decimal?  @db.Decimal(3, 1)
+  tyreBrand         String?   @db.VarChar(100)
+  tyreModel         String?   @db.VarChar(150)
+  tyreWidth         Int?
+  replacementIntent String?   @db.VarChar(20)
+  profileRider      String?   @db.VarChar(20)
+  bikeValue         Decimal?  @db.Decimal(8, 2)
+  annualKm          Int?
+  region            String?   @db.VarChar(100)
+
+  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  materiel    Materiel?   @relation(fields: [materielId], references: [id], onDelete: SetNull)
+
+  @@map("sortie")
 }

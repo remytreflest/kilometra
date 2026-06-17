@@ -43,3 +43,6 @@ docker-compose.override.yml
 # Misc
 *.tgz
 *.env.test
+
+# Claude Code internal
+.claude/

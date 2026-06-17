@@ -8,7 +8,7 @@
     "start": "node dist/main.js",
     "test": "jest --coverage",
     "prisma": "prisma",
-    "seed": "node prisma/seed.js"
+    "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",
