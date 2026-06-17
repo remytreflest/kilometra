@@ -1,0 +1,57 @@
+// ============================================================
+// MICHELIN DESIGN SYSTEM — TYPOGRAPHY
+// ============================================================
+
+$font-display: 'Montserrat', 'Michelin Unit Titling', sans-serif;
+$font-body:    'Noto Sans', sans-serif;
+
+// --- Échelle (mobile-first) ---
+$text-h1:      2rem;
+$text-h2:      1.875rem;
+$text-h3:      1.75rem;
+$text-h4:      1.25rem;
+$text-body:    1rem;
+$text-small:   0.875rem;
+$text-caption: 0.75rem;
+$text-cta:     0.875rem;
+
+// --- Poids ---
+$weight-regular:   400;
+$weight-medium:    500;
+$weight-semibold:  600;
+$weight-bold:      700;
+$weight-extrabold: 800;
+$weight-black:     900;
+
+// --- Line heights ---
+$lh-tight:  1.08;
+$lh-snug:   1.16;
+$lh-normal: 1.5;
+
+:root {
+  --font-display:      #{$font-display};
+  --font-body:         #{$font-body};
+
+  --text-h1:           #{$text-h1};
+  --text-h2:           #{$text-h2};
+  --text-h3:           #{$text-h3};
+  --text-h4:           #{$text-h4};
+  --text-body:         #{$text-body};
+  --text-small:        #{$text-small};
+  --text-caption:      #{$text-caption};
+  --text-cta:          #{$text-cta};
+
+  --weight-regular:    #{$weight-regular};
+  --weight-medium:     #{$weight-medium};
+  --weight-semibold:   #{$weight-semibold};
+  --weight-bold:       #{$weight-bold};
+  --weight-extrabold:  #{$weight-extrabold};
+  --weight-black:      #{$weight-black};
+}
+
+@media (min-width: 960px) {
+  :root {
+    --text-h1: 2.25rem;
+    --text-h2: 2rem;
+  }
+}

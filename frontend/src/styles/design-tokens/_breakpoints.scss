@@ -1,0 +1,18 @@
+// ============================================================
+// MICHELIN DESIGN SYSTEM — BREAKPOINTS (mobile-first)
+// ============================================================
+
+$bp-xs: 360px;   // 4 colonnes
+$bp-sm: 600px;   // 8 colonnes
+$bp-md: 960px;   // 12 col + sidebar
+$bp-lg: 1280px;  // 12 colonnes
+$bp-xl: 1920px;  // 12 colonnes
+
+@mixin from-sm { @media (min-width: #{$bp-sm}) { @content; } }
+@mixin from-md { @media (min-width: #{$bp-md}) { @content; } }
+@mixin from-lg { @media (min-width: #{$bp-lg}) { @content; } }
+@mixin from-xl { @media (min-width: #{$bp-xl}) { @content; } }
+
+// Shorthand souvent utilisé
+@mixin mobile-only { @media (max-width: #{$bp-md - 1px}) { @content; } }
+@mixin desktop-only { @media (min-width: #{$bp-md}) { @content; } }

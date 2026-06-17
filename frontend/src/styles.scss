@@ -1,0 +1,145 @@
+// ============================================================
+// MICHELIN PERFORMANCE — STYLES GLOBAUX
+// ============================================================
+
+// 1. Thème Angular Material
+@use 'styles/michelin-theme' as *;
+
+// 2. Design Tokens
+@use 'styles/design-tokens/colors' as *;
+@use 'styles/design-tokens/typography' as *;
+@use 'styles/design-tokens/spacing' as *;
+@use 'styles/design-tokens/elevation' as *;
+@use 'styles/design-tokens/breakpoints' as *;
+
+// ============================================================
+// RESET & BASE
+// ============================================================
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: $font-body;
+  font-size: $text-body;
+  color: $text-primary;
+  background: $surface-app;
+  -webkit-font-smoothing: antialiased;
+  line-height: $lh-normal;
+}
+img, svg { display: block; max-width: 100%; }
+button { font-family: inherit; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+ul { margin: 0; padding: 0; list-style: none; }
+h1, h2, h3, h4, p { margin: 0; }
+
+// Focus accessible
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible,
+input:focus-visible {
+  outline: 3px solid $color-blue-500;
+  outline-offset: 2px;
+  border-radius: $radius-sm;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+// ============================================================
+// TYPOGRAPHIE GLOBALE
+// ============================================================
+h1 {
+  font-family: $font-display;
+  font-weight: $weight-black;
+  font-size: var(--text-h1);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+}
+h2 {
+  font-family: $font-display;
+  font-weight: $weight-extrabold;
+  font-size: var(--text-h2);
+  line-height: 1.16;
+  letter-spacing: -0.01em;
+}
+h3 {
+  font-family: $font-display;
+  font-weight: $weight-extrabold;
+  font-size: $text-h3;
+  line-height: 1.2;
+}
+h4 {
+  font-family: $font-display;
+  font-weight: $weight-bold;
+  font-size: $text-h4;
+  line-height: 1.25;
+}
+
+// ============================================================
+// LAYOUT CONTAINER
+// ============================================================
+.mich-container {
+  width: 100%;
+  max-width: $container-max;
+  margin: 0 auto;
+  padding-inline: $space-4;
+
+  @include from-sm { padding-inline: $space-6; }
+  @include from-md { padding-inline: $space-10; }
+}
+
+// ============================================================
+// UTILITAIRES GLOBAUX
+// ============================================================
+.text-secondary { color: $text-secondary; }
+.text-small     { font-size: $text-small; }
+.text-caption   { font-size: $text-caption; color: $text-secondary; }
+.text-mono-num  {
+  font-family: $font-display;
+  font-weight: $weight-black;
+  font-variant-numeric: tabular-nums;
+}
+
+.muted { opacity: 0.5; }
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ============================================================
+// OVERRIDE ANGULAR MATERIAL
+// ============================================================
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-outlined-button {
+  border-radius: $radius-pill !important;
+  font-weight: $weight-bold !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase !important;
+  min-height: 48px !important;
+}
+
+.mat-mdc-chip {
+  border-radius: $radius-pill !important;
+  font-size: $text-small !important;
+  font-weight: $weight-semibold !important;
+}
+
+.mat-mdc-table {
+  width: 100%;
+}
+
+// Scrollbar fine
+* {
+  scrollbar-width: thin;
+  scrollbar-color: $color-grey-300 transparent;
+}
