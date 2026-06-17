@@ -1,0 +1,176 @@
+.home-container {
+  position: relative;
+  height: 100%;
+}
+
+/* Screen label */
+.screen-label {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+
+  p {
+    color: #666666;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+}
+
+/* Hero */
+.hero {
+  position: relative;
+  padding: 40px 16px 24px;
+  background: linear-gradient(135deg, #000C34, #001850, #000C34);
+  overflow: hidden;
+}
+
+/* Glow effects */
+.glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+}
+
+.glow-yellow {
+  top: 32px;
+  right: 32px;
+  width: 128px;
+  height: 128px;
+  background: #FCE500;
+  opacity: 0.05;
+}
+
+.glow-blue {
+  top: 0;
+  left: 0;
+  width: 160px;
+  height: 160px;
+  background: #27509B;
+  opacity: 0.1;
+}
+
+/* Badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  background: rgba(252, 229, 0, 0.1);
+  border: 1px solid rgba(252, 229, 0, 0.3);
+
+  span {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #FCE500;
+  }
+}
+
+/* Logo */
+.logo {
+  margin-bottom: 24px;
+
+  h1 {
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 36px;
+    margin: 0;
+    color: #fff;
+  }
+
+  .accent {
+    color: #FCE500;
+  }
+}
+
+/* Tagline */
+.tagline {
+  color: #999999;
+  font-size: 11px;
+  line-height: 18px;
+  margin-bottom: 24px;
+  max-width: 280px;
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  background: #1A1A1A;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0;
+  border-right: 1px solid #333333;
+
+  &:last-child {
+    border-right: none;
+  }
+
+  .value {
+    font-size: 14px;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 4px;
+
+    .accent {
+      color: #FCE500;
+    }
+  }
+
+  .label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #666666;
+  }
+}
+
+/* CTA buttons */
+.cta-primary {
+  width: 100%;
+  height: 48px;
+  background: #FCE500;
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #FCE817;
+  }
+}
+
+.cta-secondary {
+  width: 100%;
+  height: 48px;
+  background: transparent;
+  color: #fff;
+  border: 1px solid #27509B;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(39, 80, 155, 0.1);
+  }
+}
