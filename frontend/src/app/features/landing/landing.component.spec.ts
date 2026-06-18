@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { of } from 'rxjs';
 
 import { LandingComponent } from './landing.component';
+import { AuthService } from '../../core/services/auth.service';
 import { PerformanceService } from '../../core/services/performance.service';
 import { TesterService } from '../../core/services/tester.service';
 import { PerformanceIndex } from '../../shared/models/performance.model';
@@ -28,6 +29,7 @@ describe('LandingComponent', () => {
   let component: LandingComponent;
   let perfService: any;
   let testerService: any;
+  let authService: any;
 
   beforeEach(async () => {
     perfService = {
@@ -37,10 +39,14 @@ describe('LandingComponent', () => {
     testerService = {
       getProgress: jest.fn().mockReturnValue(of(mockTester)),
     };
+    authService = {
+      isLoggedIn: jest.fn().mockReturnValue(true),
+    };
 
     await TestBed.configureTestingModule({
       imports: [LandingComponent],
       providers: [
+        { provide: AuthService,        useValue: authService },
         { provide: PerformanceService, useValue: perfService },
         { provide: TesterService,      useValue: testerService },
       ],
