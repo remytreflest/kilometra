@@ -18,7 +18,9 @@
       "Bash(docker exec *)",
       "Bash(docker-compose exec *)",
       "Bash(docker-compose stop *)",
-      "Read(//c/Users/mrtre/source/qwaklab-infra/.github/workflows/**)"
+      "Read(//c/Users/mrtre/source/qwaklab-infra/.github/workflows/**)",
+      "WebSearch",
+      "WebFetch(domain:docs.github.com)"
     ]
   }
 }
