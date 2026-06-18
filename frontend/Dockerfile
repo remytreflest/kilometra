@@ -1,6 +1,5 @@
-FROM node:20-bullseye-slim AS builder
+FROM node:20-bullseye AS builder
 WORKDIR /app
-
 
 COPY package*.json ./
 RUN npm install
