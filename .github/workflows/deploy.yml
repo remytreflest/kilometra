@@ -22,9 +22,11 @@ on:
 #   GHCR_PAT            : GitHub PAT avec scope "read:packages" (pour pull VPS)
 #
 # SECRETS pour le setup Nginx (requis uniquement si setup_nginx = true) :
-#   VPS_NGINX_CONF_DIR  : Chemin host vers le conf.d Nginx (ex: /opt/nginx/conf.d)
-#   VPS_NGINX_CONTAINER : Nom du container Nginx existant (ex: nginx_nginx_1)
-#   VPS_CERTBOT_WEBROOT : Chemin webroot certbot partagé avec Nginx (ex: /var/www/certbot)
+#   VPS_NGINX_CONF_DIR  : Chemin host vers le conf.d Nginx (valeur : /etc/nginx/conf.d)
+#
+# NOTE : Nginx tourne en service systemd sur ce VPS (pas en Docker).
+#        Certbot utilise le plugin --nginx natif (pas de webroot).
+#        VPS_NGINX_CONTAINER et VPS_CERTBOT_WEBROOT ne sont donc pas nécessaires.
 # ──────────────────────────────────────────────────────────
 
 jobs:
@@ -195,24 +197,19 @@ jobs:
         if: github.event.inputs.setup_nginx == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} \
-            "docker exec ${{ secrets.VPS_NGINX_CONTAINER }} nginx -t && \
-             docker exec ${{ secrets.VPS_NGINX_CONTAINER }} nginx -s reload"
+            "nginx -t && systemctl reload nginx"
 
       - name: "[Setup] Obtenir certificat Let's Encrypt"
         if: github.event.inputs.setup_nginx == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} '
             if [ ! -d "/etc/letsencrypt/live/michelin.qwaklab.fr" ]; then
-              docker run --rm \
-                -v /etc/letsencrypt:/etc/letsencrypt \
-                -v ${{ secrets.VPS_CERTBOT_WEBROOT }}:${{ secrets.VPS_CERTBOT_WEBROOT }} \
-                certbot/certbot certonly \
-                  --webroot \
-                  -w ${{ secrets.VPS_CERTBOT_WEBROOT }} \
-                  -d michelin.qwaklab.fr \
-                  --email ${{ secrets.CERTBOT_EMAIL }} \
-                  --agree-tos \
-                  --non-interactive
+              certbot certonly \
+                --nginx \
+                -d michelin.qwaklab.fr \
+                --email ${{ secrets.CERTBOT_EMAIL }} \
+                --agree-tos \
+                --non-interactive
               echo "✅ Certificat obtenu"
             else
               echo "✅ Certificat déjà existant"
@@ -230,8 +227,7 @@ jobs:
         if: github.event.inputs.setup_nginx == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} \
-            "docker exec ${{ secrets.VPS_NGINX_CONTAINER }} nginx -t && \
-             docker exec ${{ secrets.VPS_NGINX_CONTAINER }} nginx -s reload"
+            "nginx -t && systemctl reload nginx"
 
       # ─────────────────────────────────────────────────────
       # HEALTH CHECK
