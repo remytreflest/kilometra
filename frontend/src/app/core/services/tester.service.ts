@@ -35,7 +35,9 @@ function adaptProgress(b: BackendTesterProgress): TesterProgress {
 export class TesterService {
   constructor(private api: ApiService) {}
 
-  getProgress(): Observable<TesterProgress> {
-    return this.api.get<BackendTesterProgress>('/tester/me').pipe(map(adaptProgress));
+  getProgress(): Observable<TesterProgress | null> {
+    return this.api.get<BackendTesterProgress | null>('/tester/me').pipe(
+      map(data => data ? adaptProgress(data) : null)
+    );
   }
 }
