@@ -67,7 +67,7 @@ import { AdminKpi, TireTerrainPerf, RegionMichelinCoverage } from '../../shared/
               <div class="terrain-info">
                 <p class="terrain-type">{{ terrain.label }}</p>
                 <h4 class="terrain-tire">{{ getBest(terrain.key).tireName }}</h4>
-                <span class="terrain-score">{{ getBest(terrain.key)[terrain.key] }} / 10</span>
+                <span class="terrain-score">{{ getBest(terrain.key)[terrain.key] | number:'1.0-2' }} / 10</span>
               </div>
             </div>
           }
@@ -86,30 +86,30 @@ import { AdminKpi, TireTerrainPerf, RegionMichelinCoverage } from '../../shared/
             <ng-container matColumnDef="montagne">
               <th mat-header-cell *matHeaderCellDef>Montagne</th>
               <td mat-cell *matCellDef="let r" class="num" [class.best]="r.mountain === maxScores.mountain">
-                {{ r.mountain }}
+                {{ r.mountain | number:'1.0-2' }}
               </td>
             </ng-container>
             <ng-container matColumnDef="cotier">
               <th mat-header-cell *matHeaderCellDef>Côtier</th>
               <td mat-cell *matCellDef="let r" class="num" [class.best]="r.coastal === maxScores.coastal">
-                {{ r.coastal }}
+                {{ r.coastal | number:'1.0-2' }}
               </td>
             </ng-container>
             <ng-container matColumnDef="plaine">
               <th mat-header-cell *matHeaderCellDef>Plaine</th>
               <td mat-cell *matCellDef="let r" class="num" [class.best]="r.plain === maxScores.plain">
-                {{ r.plain }}
+                {{ r.plain | number:'1.0-2' }}
               </td>
             </ng-container>
             <ng-container matColumnDef="pluie">
               <th mat-header-cell *matHeaderCellDef>Pluie</th>
               <td mat-cell *matCellDef="let r" class="num" [class.best]="r.wet === maxScores.wet">
-                {{ r.wet }}
+                {{ r.wet | number:'1.0-2' }}
               </td>
             </ng-container>
             <ng-container matColumnDef="note">
               <th mat-header-cell *matHeaderCellDef>Note</th>
-              <td mat-cell *matCellDef="let r" class="num rating">★ {{ r.avgRating }}</td>
+              <td mat-cell *matCellDef="let r" class="num rating">★ {{ r.avgRating | number:'1.0-2' }}</td>
             </ng-container>
             <ng-container matColumnDef="km">
               <th mat-header-cell *matHeaderCellDef>Km analysés</th>
@@ -147,10 +147,10 @@ import { AdminKpi, TireTerrainPerf, RegionMichelinCoverage } from '../../shared/
                 />
               </div>
               <div class="region-stats">
-                <span class="cov-pct">{{ region.coveragePct }}%</span>
+                <span class="cov-pct">{{ region.coveragePct | number:'1.0-2' }}%</span>
                 <span class="cov-users">{{ region.michelinUsers | number }} / {{ region.totalCyclists | number }}</span>
                 <span class="cov-growth" [class.positive]="region.growthPct > 0">
-                  +{{ region.growthPct }}%
+                  +{{ region.growthPct | number:'1.0-2' }}%
                 </span>
               </div>
             </div>
@@ -170,13 +170,13 @@ import { AdminKpi, TireTerrainPerf, RegionMichelinCoverage } from '../../shared/
                 <mat-icon class="action-warn">warning</mat-icon>
                 <strong>{{ region.region }}</strong>
               </div>
-              <p class="action-coverage">{{ region.coveragePct }}% d'équipement Michelin</p>
+              <p class="action-coverage">{{ region.coveragePct | number:'1.0-2' }}% d'équipement Michelin</p>
               <p class="action-desc">
                 {{ region.totalCyclists - region.michelinUsers | number }} cyclistes non équipés
-                — potentiel de {{ (100 - region.coveragePct) }}% de progression
+                — potentiel de {{ (100 - region.coveragePct) | number:'1.0-2' }}% de progression
               </p>
               <div class="action-footer">
-                <span class="action-growth">Croissance MoM : +{{ region.growthPct }}%</span>
+                <span class="action-growth">Croissance MoM : +{{ region.growthPct | number:'1.0-2' }}%</span>
               </div>
             </div>
           }
