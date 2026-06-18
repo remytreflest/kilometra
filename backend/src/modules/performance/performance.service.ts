@@ -26,7 +26,7 @@ export class PerformanceService {
       activeCyclists,
       registeredClubs,
       analyzedKm,
-      punctureReductionPct: 34,
+      punctureReductionPct: 34,   // valeurs statiques — à remplacer par un calcul dynamique
       weeklyKmGrowth: 5.2,
       monthlyUserGrowth: recentUsers,
       monthlyClubGrowth: recentClubs,

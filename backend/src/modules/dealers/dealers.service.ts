@@ -1,8 +1,9 @@
 import prisma from '../../config/database';
 import { StockStatus } from '@prisma/client';
 
+// Returns great-circle distance in km between two GPS coordinates
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
+  const R = 6371; // Earth radius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a =
