@@ -1,8 +1,9 @@
 FROM node:20-bullseye-slim AS builder
 WORKDIR /app
 
+
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm install
 
 COPY . .
 RUN npm run build -- --configuration production
