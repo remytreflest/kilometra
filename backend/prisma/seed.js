@@ -80,6 +80,73 @@ const CLUB_BADGES = [
   { id: 'b4', label: '500 000 km communauté', icon: '🚴', color: 'green', unlocked: true },
 ];
 
+const COMPETITOR_TIRES_DATA = [
+  {
+    reference: 'CONTI-GP5000',
+    name: 'Grand Prix 5000',
+    brand: 'Concurrent',
+    category: 'competition',
+    adhesion: 9.1,
+    efficiency: 9.2,
+    comfort: 7.0,
+    punctureResistance: 7.8,
+    durability: 7.5,
+    avgScore: 8.9,
+    communityKm: 1800000,
+    punctureReductionPct: 20,
+    recommendedFor: ['course', 'compétition', 'entraînement'],
+    priceEur: 79.90,
+  },
+  {
+    reference: 'VITTORIA-CORSA',
+    name: 'Corsa Pro',
+    brand: 'Concurrent',
+    category: 'competition',
+    adhesion: 9.3,
+    efficiency: 9.0,
+    comfort: 6.8,
+    punctureResistance: 7.2,
+    durability: 7.0,
+    avgScore: 8.8,
+    communityKm: 1200000,
+    punctureReductionPct: 18,
+    recommendedFor: ['course élite', 'critérium'],
+    priceEur: 99.90,
+  },
+  {
+    reference: 'SCHWALBE-ONE',
+    name: 'One Performance',
+    brand: 'Concurrent',
+    category: 'route',
+    adhesion: 8.4,
+    efficiency: 8.8,
+    comfort: 8.0,
+    punctureResistance: 8.5,
+    durability: 8.8,
+    avgScore: 8.3,
+    communityKm: 2100000,
+    punctureReductionPct: 29,
+    recommendedFor: ['route', 'sportif', 'club'],
+    priceEur: 54.90,
+  },
+  {
+    reference: 'PIRELLI-PZERO',
+    name: 'P Zero Race',
+    brand: 'Concurrent',
+    category: 'route',
+    adhesion: 8.8,
+    efficiency: 8.6,
+    comfort: 7.6,
+    punctureResistance: 8.0,
+    durability: 8.2,
+    avgScore: 8.5,
+    communityKm: 980000,
+    punctureReductionPct: 25,
+    recommendedFor: ['route', 'compétition amateur'],
+    priceEur: 69.90,
+  },
+];
+
 const TIRES_DATA = [
   {
     reference: 'POWER-CUP-2',
@@ -413,7 +480,8 @@ async function seedUsers(clubs) {
   const users = [];
   for (let i = 0; i < USERS_DATA.length; i++) {
     const u = USERS_DATA[i];
-    const clubId = i >= 2 ? clubs[i % clubs.length].id : null;
+    // Admin principal (index 0) → meilleur club ; tech admin (index 1) → pas de club
+    const clubId = i === 0 ? clubs[0].id : i >= 2 ? clubs[i % clubs.length].id : null;
     const user = await prisma.user.create({
       data: {
         firstName: u.firstName,
@@ -458,15 +526,24 @@ async function seedUserBadges(users, badges) {
   }
 }
 
+const REWARD_TYPES = [
+  { type: 'coupon', title: 'Coupon de réduction', description: '10% de réduction sur votre prochain achat de pneus Michelin' },
+  { type: 'access', title: 'Accès VIP', description: 'Accès prioritaire aux nouveaux modèles de pneus' },
+  { type: 'product', title: 'Kit entretien offert', description: 'Kit nettoyage et entretien pneu offert en magasin partenaire' },
+];
+
 async function seedRewards(users) {
   console.log('  Seeding rewards...');
   const regularUsers = users.filter((u) => u.role === 'USER');
   for (let i = 0; i < regularUsers.length; i++) {
     const user = regularUsers[i];
+    const tpl = REWARD_TYPES[i % REWARD_TYPES.length];
     await prisma.reward.create({
       data: {
         userId: user.id,
-        type: 'coupon',
+        type: tpl.type,
+        title: tpl.title,
+        description: tpl.description,
         code: `MICH-${user.firstName.toUpperCase().slice(0, 3)}-${(1000 + i * 37).toString()}`,
         validUntil: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
         usedAt: i === 1 ? new Date() : null,
@@ -476,9 +553,9 @@ async function seedRewards(users) {
 }
 
 async function seedTires() {
-  console.log('  Seeding tires (11)...');
+  console.log('  Seeding tires (11 Michelin + 4 Concurrent)...');
   const tires = [];
-  for (const t of TIRES_DATA) {
+  for (const t of [...TIRES_DATA, ...COMPETITOR_TIRES_DATA]) {
     const tire = await prisma.tire.create({ data: t });
     tires.push(tire);
   }
@@ -487,12 +564,13 @@ async function seedTires() {
 
 async function seedTireWears(users, tires) {
   console.log('  Seeding tire wears...');
+  const michelinTires = tires.filter((t) => t.brand === 'Michelin');
   const regularUsers = users.filter((u) => u.role === 'USER');
   const wearStatuses = ['good', 'good', 'warning', 'critical'];
   for (let i = 0; i < regularUsers.length; i++) {
     const user = regularUsers[i];
-    const tire1 = tires[i % tires.length];
-    const tire2 = tires[(i + 3) % tires.length];
+    const tire1 = michelinTires[i % michelinTires.length];
+    const tire2 = michelinTires[(i + 3) % michelinTires.length];
     const installedAt1 = new Date(Date.now() - (90 + i * 10) * 24 * 60 * 60 * 1000);
     const currentKm1 = 1800 + i * 200;
     const estimatedMaxKm1 = 5000;
@@ -502,6 +580,7 @@ async function seedTireWears(users, tires) {
         tireId: tire1.id,
         tireRef: tire1.reference,
         tireName: tire1.name,
+        position: 'front',
         installedAt: installedAt1,
         currentKm: currentKm1,
         estimatedMaxKm: estimatedMaxKm1,
@@ -518,6 +597,7 @@ async function seedTireWears(users, tires) {
           tireId: tire2.id,
           tireRef: tire2.reference,
           tireName: tire2.name,
+          position: 'rear',
           installedAt: installedAt2,
           currentKm: currentKm2,
           estimatedMaxKm: 6000,
@@ -591,16 +671,19 @@ async function seedReviews(users, tires) {
   ];
   const platforms = ['instagram', 'youtube', 'strava', 'komoot'];
   let reviewCount = 0;
+  const michelinTiresForReview = tires.filter((t) => t.brand === 'Michelin');
   for (let i = 0; i < 9; i++) {
     const user = regularUsers[i % regularUsers.length];
-    const tire = tires[i % tires.length];
+    const tire = michelinTiresForReview[i % michelinTiresForReview.length];
+    const rating = 4 + (i % 2 === 0 ? 1 : 0);
     await prisma.review.create({
       data: {
         authorId: user.id,
         authorName: `${user.firstName} ${user.lastName}`,
         authorInitials: `${user.firstName[0]}${user.lastName[0]}`,
         kmWithTire: 1000 + i * 500,
-        rating: 4 + (i % 2 === 0 ? 1 : 0),
+        rating,
+        recommended: rating >= 4,
         comment: comments[i],
         isVerified: i % 3 !== 0,
         date: new Date(Date.now() - (i * 14) * 24 * 60 * 60 * 1000),
@@ -612,7 +695,7 @@ async function seedReviews(users, tires) {
   }
   for (let i = 0; i < 9; i++) {
     const user = regularUsers[i % regularUsers.length];
-    const tire = tires[(i + 2) % tires.length];
+    const tire = michelinTiresForReview[(i + 2) % michelinTiresForReview.length];
     const platform = platforms[i % platforms.length];
     await prisma.review.create({
       data: {
@@ -621,6 +704,7 @@ async function seedReviews(users, tires) {
         authorInitials: `CP`,
         kmWithTire: 3000 + i * 800,
         rating: 5,
+        recommended: true,
         comment: influencerComments[i],
         isVerified: true,
         date: new Date(Date.now() - (i * 21) * 24 * 60 * 60 * 1000),
@@ -669,10 +753,10 @@ async function seedTesterProgress(users) {
   console.log('  Seeding tester progress...');
   const regularUsers = users.filter((u) => u.role === 'USER');
   const rewardTemplates = [
-    { label: 'Testeur Bronze', description: 'Atteindre 1 000 km avec un pneu Michelin', milestoneKm: 1000 },
-    { label: 'Testeur Argent', description: 'Atteindre 3 000 km avec un pneu Michelin', milestoneKm: 3000 },
-    { label: 'Testeur Or', description: 'Atteindre 5 000 km avec un pneu Michelin', milestoneKm: 5000 },
-    { label: 'Testeur Élite', description: 'Atteindre 10 000 km avec un pneu Michelin', milestoneKm: 10000 },
+    { label: 'Testeur Bronze', description: 'Atteindre 1 000 km avec un pneu Michelin', milestoneKm: 1000, icon: 'award' },
+    { label: 'Testeur Argent', description: 'Atteindre 3 000 km avec un pneu Michelin', milestoneKm: 3000, icon: 'star' },
+    { label: 'Testeur Or', description: 'Atteindre 5 000 km avec un pneu Michelin', milestoneKm: 5000, icon: 'trophy' },
+    { label: 'Testeur Élite', description: 'Atteindre 10 000 km avec un pneu Michelin', milestoneKm: 10000, icon: 'crown' },
   ];
   for (let i = 0; i < regularUsers.length; i++) {
     const user = regularUsers[i];
@@ -706,6 +790,8 @@ async function seedTesterProgress(users) {
           testerProgressId: progress.id,
           label: tpl.label,
           description: tpl.description,
+          requiredKm: tpl.milestoneKm,
+          icon: tpl.icon,
           status,
           unlockedAt,
         },
@@ -722,16 +808,17 @@ async function seedRegionCoverage() {
 }
 
 async function seedTireTerrainPerf(tires) {
-  console.log('  Seeding tire terrain perfs (11)...');
+  console.log('  Seeding tire terrain perfs...');
   const terrainProfiles = {
-    'competition': { mountain: 9.4, coastal: 8.8, plain: 9.7, wet: 7.8 },
-    'route': { mountain: 8.2, coastal: 8.6, plain: 9.1, wet: 8.4 },
-    'endurance': { mountain: 8.0, coastal: 8.4, plain: 8.8, wet: 8.9 },
-    'gravel': { mountain: 9.1, coastal: 7.9, plain: 8.2, wet: 9.0 },
+    'competition': { mountain: 9.4, coastal: 8.8, plain: 9.7, wet: 7.8, avgPunctureRate: 1.2 },
+    'route':       { mountain: 8.2, coastal: 8.6, plain: 9.1, wet: 8.4, avgPunctureRate: 0.8 },
+    'endurance':   { mountain: 8.0, coastal: 8.4, plain: 8.8, wet: 8.9, avgPunctureRate: 0.5 },
+    'gravel':      { mountain: 9.1, coastal: 7.9, plain: 8.2, wet: 9.0, avgPunctureRate: 1.8 },
   };
   for (const tire of tires) {
     const profile = terrainProfiles[tire.category];
     const noise = () => Math.round((Math.random() * 0.6 - 0.3) * 10) / 10;
+    const punctureNoise = () => Math.round((Math.random() * 0.4 - 0.2) * 10) / 10;
     await prisma.tireTerrainPerf.create({
       data: {
         tireRef: tire.reference,
@@ -743,6 +830,7 @@ async function seedTireTerrainPerf(tires) {
         wet: Math.min(10, Math.max(1, profile.wet + noise())),
         avgRating: tire.avgScore,
         totalKmAnalyzed: tire.communityKm,
+        avgPunctureRate: Math.max(0, profile.avgPunctureRate + punctureNoise()),
       },
     });
   }
@@ -753,6 +841,138 @@ async function seedAdminKpis() {
   for (const kpi of ADMIN_KPIS_DATA) {
     await prisma.adminKpi.create({ data: kpi });
   }
+}
+
+async function seedAdminCyclistData(adminUser, tires) {
+  console.log('  Seeding rich data for admin@michelin.fr...');
+  const michelinTires = tires.filter((t) => t.brand === 'Michelin');
+  const powerCup   = michelinTires.find((t) => t.reference === 'POWER-CUP-2')   || michelinTires[0];
+  const powerEnd   = michelinTires.find((t) => t.reference === 'POWER-END-2')   || michelinTires[2];
+  const powerGravel = michelinTires.find((t) => t.reference === 'POWER-GRAVEL') || michelinTires[7];
+
+  // Tire wears — pneu avant presque usé, arrière bon état
+  await prisma.tireWear.create({
+    data: {
+      userId: adminUser.id,
+      tireId: powerCup.id,
+      tireRef: powerCup.reference,
+      tireName: powerCup.name,
+      position: 'front',
+      installedAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000),
+      currentKm: 4200,
+      estimatedMaxKm: 5000,
+      wearPct: 84,
+      status: 'warning',
+    },
+  });
+  await prisma.tireWear.create({
+    data: {
+      userId: adminUser.id,
+      tireId: powerGravel.id,
+      tireRef: powerGravel.reference,
+      tireName: powerGravel.name,
+      position: 'rear',
+      installedAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+      currentKm: 2800,
+      estimatedMaxKm: 6000,
+      wearPct: 47,
+      status: 'good',
+    },
+  });
+
+  // 20 activités riches sur les 20 dernières semaines
+  const adminActivityNames = [
+    'Montée chronométrée Galibier', 'Sortie club Paris-Roubaix', 'Longue distance Bretagne',
+    'Entraînement intervalles', 'Reconnaissance Tourmalet', 'Cyclosportive Marmotte',
+    'Gravel aventure Luberon', 'Test de seuil lacté', 'Sortie endurance 200km',
+    'Circuit des châteaux Loire', 'VTT Vercors', 'Bikepacking Pyrénées J1',
+    'Bikepacking Pyrénées J2', 'Sortie récupération active', 'Gran Fondo Alpes',
+    'Entraînement fractionné 40/20', 'Sortie pluvieuse Normandie', 'Critérium entraînement',
+    'Sortie montagne sancy', 'Route des vins Alsace',
+  ];
+  const adminTypes    = ['route', 'route', 'route', 'fractionné', 'route', 'sortie longue', 'gravel', 'fractionné', 'sortie longue', 'route', 'vtt', 'gravel', 'gravel', 'route', 'sortie longue', 'fractionné', 'route', 'route', 'route', 'route'];
+  const adminDistances = [87, 145, 210, 55, 132, 168, 94, 48, 202, 120, 62, 178, 165, 35, 195, 52, 78, 67, 108, 156];
+  const adminElevations = [2300, 420, 890, 180, 2640, 3150, 1840, 210, 1120, 340, 1980, 4200, 3900, 95, 3680, 260, 310, 290, 1560, 760];
+  for (let i = 0; i < 20; i++) {
+    const distKm = adminDistances[i];
+    const type   = adminTypes[i];
+    const avgSpd = type === 'vtt' ? 19 + Math.random() * 4 : type === 'gravel' ? 22 + Math.random() * 6 : 27 + Math.random() * 10;
+    await prisma.activity.create({
+      data: {
+        userId: adminUser.id,
+        name: adminActivityNames[i],
+        date: new Date(Date.now() - (i * 7 + Math.floor(Math.random() * 2)) * 24 * 60 * 60 * 1000),
+        distanceKm: distKm,
+        elevationM: adminElevations[i],
+        avgSpeedKmh: Math.round(avgSpd * 10) / 10,
+        maxSpeedKmh: Math.round((avgSpd + 12 + Math.random() * 18) * 10) / 10,
+        durationMin: Math.round((distKm / avgSpd) * 60),
+        type,
+        location: LOCATIONS[i % LOCATIONS.length],
+        mpiImpact: Math.round((8 + Math.random() * 15) * 10) / 10,
+      },
+    });
+  }
+
+  // Tester progress — rang #1, 8 500 km, 3 paliers débloqués
+  const rewardTemplates = [
+    { label: 'Testeur Bronze', description: 'Atteindre 1 000 km avec un pneu Michelin', milestoneKm: 1000, icon: 'award' },
+    { label: 'Testeur Argent', description: 'Atteindre 3 000 km avec un pneu Michelin', milestoneKm: 3000, icon: 'star' },
+    { label: 'Testeur Or',     description: 'Atteindre 5 000 km avec un pneu Michelin', milestoneKm: 5000, icon: 'trophy' },
+    { label: 'Testeur Élite',  description: 'Atteindre 10 000 km avec un pneu Michelin', milestoneKm: 10000, icon: 'crown' },
+  ];
+  const adminKm = 8500;
+  const progress = await prisma.testerProgress.create({
+    data: {
+      userId: adminUser.id,
+      currentKm: adminKm,
+      nextMilestoneKm: 10000,
+      progressPct: 85,
+      couponCode: 'TEST-ADM-ELITE',
+      couponExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      totalTesters: 1247,
+      rank: 1,
+    },
+  });
+  for (let j = 0; j < rewardTemplates.length; j++) {
+    const tpl = rewardTemplates[j];
+    const unlocked = adminKm >= tpl.milestoneKm;
+    await prisma.testerReward.create({
+      data: {
+        testerProgressId: progress.id,
+        label: tpl.label,
+        description: tpl.description,
+        requiredKm: tpl.milestoneKm,
+        icon: tpl.icon,
+        status: unlocked ? 'unlocked' : 'in-progress',
+        unlockedAt: unlocked ? new Date(Date.now() - (3 - j) * 60 * 24 * 60 * 60 * 1000) : null,
+      },
+    });
+  }
+
+  // Récompenses
+  await prisma.reward.create({
+    data: {
+      userId: adminUser.id,
+      type: 'coupon',
+      title: 'Coupon testeur élite',
+      description: '20% de réduction sur la gamme Power Cup — réservé aux testeurs rang #1',
+      code: 'MICH-ADM-ELITE20',
+      validUntil: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+      usedAt: null,
+    },
+  });
+  await prisma.reward.create({
+    data: {
+      userId: adminUser.id,
+      type: 'access',
+      title: 'Accès Michelin Labs',
+      description: 'Accès prioritaire aux prototypes de la prochaine génération Power Cup',
+      code: 'MICH-ADM-LABS24',
+      validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      usedAt: null,
+    },
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -770,6 +990,8 @@ async function main() {
   const tires = await seedTires();
   await seedTireWears(users, tires);
   await seedActivities(users);
+  const adminUser = users.find((u) => u.email === 'admin@michelin.fr');
+  if (adminUser) await seedAdminCyclistData(adminUser, tires);
   await seedDealers();
   await seedReviews(users, tires);
   await seedPerformanceIndices(users);

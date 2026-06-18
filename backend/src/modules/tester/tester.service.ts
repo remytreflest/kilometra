@@ -6,8 +6,7 @@ export class TesterService {
       where: { userId },
       include: { rewards: { orderBy: { id: 'asc' } } },
     });
-    if (!progress) throw Object.assign(new Error('Progression testeur introuvable'), { status: 404 });
-    return progress;
+    return progress ?? null;
   }
 
   static async getMyRewards(userId: string) {

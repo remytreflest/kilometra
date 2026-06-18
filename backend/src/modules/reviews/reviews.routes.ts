@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ReviewsController } from './reviews.controller';
 import { authMiddleware } from '../../middlewares/auth.middleware';
 import { validate } from '../../middlewares/validate.middleware';
+import { asyncHandler } from '../../utils/asyncHandler';
 
 const router = Router();
 
@@ -18,9 +19,9 @@ const createSchema = z.object({
 });
 
 // Routes statiques avant les routes paramétrées
-router.get('/kpis', ReviewsController.getKpis);
-router.get('/', ReviewsController.getAll);
-router.post('/', authMiddleware, validate(createSchema), ReviewsController.create);
-router.get('/:id', ReviewsController.getById);
+router.get('/kpis', asyncHandler(ReviewsController.getKpis));
+router.get('/', asyncHandler(ReviewsController.getAll));
+router.post('/', authMiddleware, validate(createSchema), asyncHandler(ReviewsController.create));
+router.get('/:id', asyncHandler(ReviewsController.getById));
 
 export default router;

@@ -22,4 +22,9 @@ export class UsersController {
     const rewards = await UsersService.getRewards(req.user!.id);
     res.json(formatResponse(rewards));
   }
+
+  static async allBadges(req: Request, res: Response) {
+    const badges = await UsersService.getAllBadgesWithStatus(req.user!.id);
+    res.json(formatResponse(badges));
+  }
 }

@@ -73,14 +73,16 @@ model UserBadge {
 }
 
 model Reward {
-  id         String    @id @default(cuid())
-  userId     String
-  type       String
-  code       String    @unique
-  validUntil DateTime
-  usedAt     DateTime?
-  user       User      @relation(fields: [userId], references: [id])
-  createdAt  DateTime  @default(now())
+  id          String    @id @default(cuid())
+  userId      String
+  type        String
+  title       String    @default("")
+  description String    @default("")
+  code        String    @unique
+  validUntil  DateTime
+  usedAt      DateTime?
+  user        User      @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
 }
 
 model Club {
@@ -128,6 +130,7 @@ model TireWear {
   tireId         String
   tireRef        String
   tireName       String
+  position       String   @default("front")
   installedAt    DateTime
   currentKm      Float
   estimatedMaxKm Float
@@ -180,6 +183,7 @@ model Review {
   authorInitials   String
   kmWithTire       Float
   rating           Int
+  recommended      Boolean    @default(false)
   comment          String
   isVerified       Boolean    @default(false)
   date             DateTime
@@ -226,6 +230,8 @@ model TesterReward {
   testerProgressId String
   label            String
   description      String
+  requiredKm       Float          @default(0)
+  icon             String         @default("star")
   status           String
   unlockedAt       DateTime?
   testerProgress   TesterProgress @relation(fields: [testerProgressId], references: [id])
@@ -242,17 +248,18 @@ model RegionCoverage {
 }
 
 model TireTerrainPerf {
-  id              String  @id @default(cuid())
-  tireRef         String  @unique
-  tireName        String
-  tireId          String? @unique
-  mountain        Float
-  coastal         Float
-  plain           Float
-  wet             Float
-  avgRating       Float
-  totalKmAnalyzed Int
-  tire            Tire?   @relation(fields: [tireId], references: [id])
+  id               String  @id @default(cuid())
+  tireRef          String  @unique
+  tireName         String
+  tireId           String? @unique
+  mountain         Float
+  coastal          Float
+  plain            Float
+  wet              Float
+  avgRating        Float
+  totalKmAnalyzed  Int
+  avgPunctureRate  Float   @default(0)
+  tire             Tire?   @relation(fields: [tireId], references: [id])
 }
 
 model AdminKpi {

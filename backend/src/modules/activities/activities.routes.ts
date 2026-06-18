@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ActivitiesController } from './activities.controller';
 import { authMiddleware } from '../../middlewares/auth.middleware';
 import { validate } from '../../middlewares/validate.middleware';
+import { asyncHandler } from '../../utils/asyncHandler';
 
 const router = Router();
 
@@ -20,9 +21,9 @@ const createSchema = z.object({
 });
 
 router.use(authMiddleware);
-router.get('/recent', ActivitiesController.getRecent);
-router.get('/', ActivitiesController.getAll);
-router.post('/', validate(createSchema), ActivitiesController.create);
-router.get('/:id', ActivitiesController.getById);
+router.get('/recent', asyncHandler(ActivitiesController.getRecent));
+router.get('/', asyncHandler(ActivitiesController.getAll));
+router.post('/', validate(createSchema), asyncHandler(ActivitiesController.create));
+router.get('/:id', asyncHandler(ActivitiesController.getById));
 
 export default router;

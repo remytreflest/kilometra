@@ -43,4 +43,17 @@ export class UsersService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  static async getAllBadgesWithStatus(userId: string) {
+    const [allBadges, userBadges] = await Promise.all([
+      prisma.badge.findMany({ orderBy: { label: 'asc' } }),
+      prisma.userBadge.findMany({ where: { userId }, select: { badgeId: true, earnedAt: true } }),
+    ]);
+    const earned = new Map(userBadges.map((ub) => [ub.badgeId, ub.earnedAt]));
+    return allBadges.map((b) => ({
+      ...b,
+      unlocked: earned.has(b.id),
+      earnedAt: earned.get(b.id) ?? null,
+    }));
+  }
 }
