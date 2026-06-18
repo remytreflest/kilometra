@@ -1,39 +1,699 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "API — Fullstack Hackathon",
-    "version": "1.0.0"
+    "title": "API — Hackathon Michelin",
+    "version": "1.0.0",
+    "description": "API REST du projet Hackathon Michelin. Toutes les routes sont préfixées /api/. Les routes protégées nécessitent un token JWT Bearer (Authorization: Bearer <token>)."
   },
+  "servers": [
+    { "url": "http://localhost:3000", "description": "Développement local" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ApiSuccess": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {}
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": { "type": "string" },
+              "code": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    { "name": "Health", "description": "État du serveur" },
+    { "name": "Auth", "description": "Authentification et session" },
+    { "name": "Users", "description": "Profil utilisateur, badges et récompenses" },
+    { "name": "Tires", "description": "Catalogue de pneus et statistiques terrain" },
+    { "name": "Wear", "description": "Suivi d'usure des pneus montés" },
+    { "name": "Activities", "description": "Activités cyclistes de l'utilisateur" },
+    { "name": "Clubs", "description": "Clubs et classements" },
+    { "name": "Leaderboard", "description": "Classements national et régional" },
+    { "name": "Performance", "description": "Métriques de performance" },
+    { "name": "Dealers", "description": "Points de vente partenaires" },
+    { "name": "Reviews", "description": "Avis sur les pneus" },
+    { "name": "Tester", "description": "Programme testeur Michelin" },
+    { "name": "Admin", "description": "Routes réservées aux administrateurs" }
+  ],
   "paths": {
     "/api/health": {
       "get": {
+        "tags": ["Health"],
         "summary": "Health check",
+        "description": "Vérifie que le serveur est opérationnel. Utilisé par Docker Compose.",
         "responses": {
-          "200": { "description": "OK" }
+          "200": {
+            "description": "Serveur opérationnel",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "data": { "status": "ok", "uptime": 123.45 } }
+              }
+            }
+          }
         }
       }
     },
-    "/api/todos": {
-      "get": {
-        "summary": "List todos",
-        "responses": { "200": { "description": "List" } }
-      },
+
+    "/api/auth/login": {
       "post": {
-        "summary": "Create todo",
-        "requestBody": { "content": { "application/json": {} } },
-        "responses": { "201": { "description": "Created" } }
+        "tags": ["Auth"],
+        "summary": "Connexion",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "admin@michelin.fr" },
+                  "password": { "type": "string", "example": "Michelin123!" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token JWT retourné",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "data": { "token": "<jwt>", "user": { "id": "...", "email": "admin@michelin.fr", "role": "admin" } } }
+              }
+            }
+          },
+          "401": { "description": "Identifiants invalides" }
+        }
       }
     },
-    "/api/todos/{id}": {
-      "patch": {
-        "summary": "Update todo",
-        "parameters": [{ "name": "id", "in": "path", "required": true }],
-        "responses": { "200": { "description": "Updated" } }
+
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Inscription",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["firstName", "lastName", "email", "password"],
+                "properties": {
+                  "firstName": { "type": "string", "example": "Jean" },
+                  "lastName": { "type": "string", "example": "Dupont" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 6 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Compte créé, token JWT retourné" },
+          "400": { "description": "Validation échouée ou email déjà utilisé" }
+        }
+      }
+    },
+
+    "/api/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Déconnexion",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Session terminée" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Utilisateur courant (via token)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Données de l'utilisateur connecté" },
+          "401": { "description": "Token invalide ou absent" }
+        }
+      }
+    },
+
+    "/api/users/me": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Profil de l'utilisateur connecté",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Profil complet" },
+          "401": { "description": "Non authentifié" }
+        }
       },
-      "delete": {
-        "summary": "Delete todo",
-        "parameters": [{ "name": "id", "in": "path", "required": true }],
-        "responses": { "200": { "description": "Deleted" } }
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Mettre à jour le profil",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firstName": { "type": "string" },
+                  "lastName": { "type": "string" },
+                  "stravaConnected": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profil mis à jour" },
+          "400": { "description": "Validation échouée" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/users/me/badges": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Badges obtenus par l'utilisateur",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Liste des badges débloqués" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/users/me/badges/all": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Tous les badges disponibles (obtenus ou non)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Liste complète des badges avec statut" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/users/me/rewards": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Récompenses de l'utilisateur",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Liste des récompenses" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/tires": {
+      "get": {
+        "tags": ["Tires"],
+        "summary": "Liste tous les pneus",
+        "responses": {
+          "200": { "description": "Catalogue complet de pneus" }
+        }
+      }
+    },
+
+    "/api/tires/michelin": {
+      "get": {
+        "tags": ["Tires"],
+        "summary": "Pneus de la marque Michelin uniquement",
+        "responses": {
+          "200": { "description": "Liste des pneus Michelin" }
+        }
+      }
+    },
+
+    "/api/tires/terrain-stats": {
+      "get": {
+        "tags": ["Tires"],
+        "summary": "Statistiques globales par type de terrain",
+        "responses": {
+          "200": { "description": "Agrégats de performance par terrain" }
+        }
+      }
+    },
+
+    "/api/tires/{id}": {
+      "get": {
+        "tags": ["Tires"],
+        "summary": "Détail d'un pneu",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Pneu trouvé" },
+          "404": { "description": "Pneu introuvable" }
+        }
+      }
+    },
+
+    "/api/tires/{id}/benchmark": {
+      "get": {
+        "tags": ["Tires"],
+        "summary": "Benchmark du pneu par rapport aux autres",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Données de benchmark" },
+          "404": { "description": "Pneu introuvable" }
+        }
+      }
+    },
+
+    "/api/tires/{id}/terrain-stats": {
+      "get": {
+        "tags": ["Tires"],
+        "summary": "Statistiques terrain pour un pneu spécifique",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Statistiques par terrain pour ce pneu" },
+          "404": { "description": "Pneu introuvable" }
+        }
+      }
+    },
+
+    "/api/wear": {
+      "get": {
+        "tags": ["Wear"],
+        "summary": "Pneus montés de l'utilisateur avec suivi d'usure",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Liste des pneus suivis" },
+          "401": { "description": "Non authentifié" }
+        }
+      },
+      "post": {
+        "tags": ["Wear"],
+        "summary": "Ajouter un pneu au suivi d'usure",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["tireId", "installedAt", "currentKm", "estimatedMaxKm"],
+                "properties": {
+                  "tireId": { "type": "string" },
+                  "installedAt": { "type": "string", "format": "date-time" },
+                  "currentKm": { "type": "number", "minimum": 0 },
+                  "estimatedMaxKm": { "type": "number", "minimum": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Pneu ajouté au suivi" },
+          "400": { "description": "Validation échouée" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/wear/{id}": {
+      "patch": {
+        "tags": ["Wear"],
+        "summary": "Mettre à jour le kilométrage actuel",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["currentKm"],
+                "properties": {
+                  "currentKm": { "type": "number", "minimum": 0 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Kilométrage mis à jour" },
+          "400": { "description": "Validation échouée" },
+          "401": { "description": "Non authentifié" },
+          "404": { "description": "Entrée introuvable" }
+        }
+      }
+    },
+
+    "/api/activities": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Toutes les activités de l'utilisateur",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Liste des activités" },
+          "401": { "description": "Non authentifié" }
+        }
+      },
+      "post": {
+        "tags": ["Activities"],
+        "summary": "Créer une activité",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "date", "distanceKm", "elevationM", "avgSpeedKmh", "maxSpeedKmh", "durationMin", "type", "location"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "date": { "type": "string", "format": "date-time" },
+                  "distanceKm": { "type": "number", "minimum": 0 },
+                  "elevationM": { "type": "number", "minimum": 0 },
+                  "avgSpeedKmh": { "type": "number", "minimum": 0 },
+                  "maxSpeedKmh": { "type": "number", "minimum": 0 },
+                  "durationMin": { "type": "number", "minimum": 0 },
+                  "type": { "type": "string", "enum": ["route", "gravel", "vtt", "fractionné", "sortie longue"] },
+                  "location": { "type": "string" },
+                  "mpiImpact": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Activité créée" },
+          "400": { "description": "Validation échouée" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/activities/recent": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Activités récentes de l'utilisateur",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Dernières activités" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/activities/{id}": {
+      "get": {
+        "tags": ["Activities"],
+        "summary": "Détail d'une activité",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Activité trouvée" },
+          "401": { "description": "Non authentifié" },
+          "404": { "description": "Activité introuvable" }
+        }
+      }
+    },
+
+    "/api/clubs": {
+      "get": {
+        "tags": ["Clubs"],
+        "summary": "Liste tous les clubs",
+        "responses": {
+          "200": { "description": "Liste des clubs" }
+        }
+      }
+    },
+
+    "/api/clubs/me": {
+      "get": {
+        "tags": ["Clubs"],
+        "summary": "Club de l'utilisateur connecté",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Club de l'utilisateur" },
+          "401": { "description": "Non authentifié" },
+          "404": { "description": "Utilisateur sans club" }
+        }
+      }
+    },
+
+    "/api/clubs/ranking": {
+      "get": {
+        "tags": ["Clubs"],
+        "summary": "Classement des clubs",
+        "responses": {
+          "200": { "description": "Clubs classés par score" }
+        }
+      }
+    },
+
+    "/api/clubs/{id}": {
+      "get": {
+        "tags": ["Clubs"],
+        "summary": "Détail d'un club",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Club trouvé" },
+          "404": { "description": "Club introuvable" }
+        }
+      }
+    },
+
+    "/api/leaderboard/national": {
+      "get": {
+        "tags": ["Leaderboard"],
+        "summary": "Classement national des cyclistes",
+        "responses": {
+          "200": { "description": "Top cyclistes au niveau national" }
+        }
+      }
+    },
+
+    "/api/leaderboard/regional": {
+      "get": {
+        "tags": ["Leaderboard"],
+        "summary": "Classement régional des cyclistes",
+        "responses": {
+          "200": { "description": "Top cyclistes par région" }
+        }
+      }
+    },
+
+    "/api/performance/me": {
+      "get": {
+        "tags": ["Performance"],
+        "summary": "Métriques de performance de l'utilisateur connecté",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Métriques personnelles" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/performance/community": {
+      "get": {
+        "tags": ["Performance"],
+        "summary": "Métriques de performance de la communauté",
+        "responses": {
+          "200": { "description": "Agrégats communautaires" }
+        }
+      }
+    },
+
+    "/api/dealers": {
+      "get": {
+        "tags": ["Dealers"],
+        "summary": "Liste tous les revendeurs partenaires",
+        "responses": {
+          "200": { "description": "Liste des points de vente" }
+        }
+      }
+    },
+
+    "/api/dealers/{id}": {
+      "get": {
+        "tags": ["Dealers"],
+        "summary": "Détail d'un revendeur",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Revendeur trouvé" },
+          "404": { "description": "Revendeur introuvable" }
+        }
+      }
+    },
+
+    "/api/reviews": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Liste tous les avis",
+        "responses": {
+          "200": { "description": "Liste des avis" }
+        }
+      },
+      "post": {
+        "tags": ["Reviews"],
+        "summary": "Déposer un avis sur un pneu",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["kmWithTire", "rating", "comment", "tireRef"],
+                "properties": {
+                  "kmWithTire": { "type": "number", "minimum": 0 },
+                  "rating": { "type": "integer", "minimum": 1, "maximum": 5 },
+                  "comment": { "type": "string", "minLength": 10 },
+                  "tireRef": { "type": "string" },
+                  "type": { "type": "string", "enum": ["user", "influencer"] },
+                  "sponsoredContent": { "type": "string" },
+                  "followerCount": { "type": "integer" },
+                  "platform": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Avis créé" },
+          "400": { "description": "Validation échouée" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/reviews/kpis": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "KPIs globaux des avis (moyennes, volumes)",
+        "responses": {
+          "200": { "description": "Indicateurs clés" }
+        }
+      }
+    },
+
+    "/api/reviews/{id}": {
+      "get": {
+        "tags": ["Reviews"],
+        "summary": "Détail d'un avis",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Avis trouvé" },
+          "404": { "description": "Avis introuvable" }
+        }
+      }
+    },
+
+    "/api/tester/me": {
+      "get": {
+        "tags": ["Tester"],
+        "summary": "Profil testeur de l'utilisateur connecté",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Profil testeur" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/tester/me/rewards": {
+      "get": {
+        "tags": ["Tester"],
+        "summary": "Récompenses liées au programme testeur",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Récompenses testeur" },
+          "401": { "description": "Non authentifié" }
+        }
+      }
+    },
+
+    "/api/admin/kpis": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "KPIs globaux de la plateforme",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Indicateurs admin" },
+          "401": { "description": "Non authentifié" },
+          "403": { "description": "Accès réservé aux admins" }
+        }
+      }
+    },
+
+    "/api/admin/regions": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Liste des régions avec données agrégées",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Régions" },
+          "401": { "description": "Non authentifié" },
+          "403": { "description": "Accès réservé aux admins" }
+        }
+      }
+    },
+
+    "/api/admin/regions/undercovered": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Régions sous-couvertes (peu de testeurs / revendeurs)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Régions sous-couvertes" },
+          "401": { "description": "Non authentifié" },
+          "403": { "description": "Accès réservé aux admins" }
+        }
+      }
+    },
+
+    "/api/admin/tires/terrain-performance": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Performance des pneus par terrain (vue admin)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Performances terrain" },
+          "401": { "description": "Non authentifié" },
+          "403": { "description": "Accès réservé aux admins" }
+        }
+      }
+    },
+
+    "/api/admin/tires/terrain-performance/best": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Meilleur pneu par type de terrain",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Pneu optimal par terrain" },
+          "401": { "description": "Non authentifié" },
+          "403": { "description": "Accès réservé aux admins" }
+        }
       }
     }
   }
