@@ -53,7 +53,7 @@ function adaptWear(b: BackendWear): TireWear {
       name: b.tireName,
       brand: 'Michelin',
       category: (b.tire?.category as TireCategory) ?? 'route',
-      scores: { grip: 0, energyReturn: 0, comfort: 0, punctureResistance: 0, durability: 0 },
+      scores: { grip: 0, energyReturn: 0, comfort: 0, punctureResistance: 0, durability: 0 }, // l'endpoint /wear ne retourne pas les scores
       avgScore: 0,
       communityKm: 0,
       punctureReductionPct: 0,
