@@ -53,8 +53,8 @@ describe('DashboardComponent', () => {
   beforeEach(async () => {
     perfService     = { getIndex: jest.fn().mockReturnValue(of(mockPerf)) };
     tireService     = {
-      getUserWear:  jest.fn().mockReturnValue(of([mockWear])),
-      getTireById:  jest.fn().mockReturnValue(of(mockTire)),
+      getUserWear:      jest.fn().mockReturnValue(of([mockWear])),
+      getMichelinTires: jest.fn().mockReturnValue(of([mockTire])),
     };
     activityService = { getRecentActivities: jest.fn().mockReturnValue(of([mockActivity])) };
     testerService   = { getProgress: jest.fn().mockReturnValue(of(mockTester)) };
@@ -88,7 +88,7 @@ describe('DashboardComponent', () => {
     expect(tireService.getUserWear).toHaveBeenCalled();
     expect(activityService.getRecentActivities).toHaveBeenCalledWith(3);
     expect(testerService.getProgress).toHaveBeenCalled();
-    expect(tireService.getTireById).toHaveBeenCalledWith('m2');
+    expect(tireService.getMichelinTires).toHaveBeenCalled();
   });
 
   it('should populate state after init', () => {

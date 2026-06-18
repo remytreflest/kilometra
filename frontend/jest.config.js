@@ -5,7 +5,7 @@ module.exports = {
     '<rootDir>/node_modules/',
     '<rootDir>/dist/'
   ],
-  transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|lodash-es/))'],
   coverageThreshold: {
     global: {
       branches: 70,
