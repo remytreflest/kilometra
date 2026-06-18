@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import { PerformanceService } from '../../core/services/performance.service';
 import { TireService } from '../../core/services/tire.service';
@@ -274,8 +275,8 @@ export class DashboardComponent implements OnInit {
       this.tester = tester;
     });
 
-    this.tireService.getTireById('m2').subscribe(tire => {
-      if (tire) this.recoTire = tire;
+    this.tireService.getMichelinTires().pipe(catchError(() => of([] as Tire[]))).subscribe(tires => {
+      this.recoTire = tires[0] ?? null;
     });
   }
 }
