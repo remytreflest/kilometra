@@ -65,7 +65,6 @@ docker-compose exec postgres psql -U postgres -c "DROP DATABASE app_db; CREATE D
 docker-compose restart api
 ```
 
-> ⚠️ Le `frontend/Dockerfile` utilise `npm ci --legacy-peer-deps` (conflit de peer deps entre TailwindCSS 4 et Angular 18).
 
 ## 🔄 Démarrage automatique du container API
 
