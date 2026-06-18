@@ -7,6 +7,7 @@ import { forkJoin } from 'rxjs';
 
 import { PerformanceService } from '../../core/services/performance.service';
 import { TesterService } from '../../core/services/tester.service';
+import { AuthService } from '../../core/services/auth.service';
 
 import { SectionEyebrowComponent } from '../../shared/components/section-eyebrow/section-eyebrow.component';
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
@@ -37,9 +38,15 @@ import { TesterProgress } from '../../shared/models/tester.model';
           à la communauté — et roulez sur ce que la donnée recommande pour vous.
         </p>
         <div class="hero-cta-row">
-          <button mat-raised-button color="accent" routerLink="/dashboard" class="hero-cta">
-            <mat-icon>bolt</mat-icon> Connecter Strava
-          </button>
+          @if (auth.isLoggedIn()) {
+            <button mat-raised-button color="accent" routerLink="/dashboard" class="hero-cta">
+              <mat-icon>dashboard</mat-icon> Mon tableau de bord
+            </button>
+          } @else {
+            <button mat-raised-button color="accent" routerLink="/login" class="hero-cta">
+              <mat-icon>login</mat-icon> Se connecter
+            </button>
+          }
           <button mat-stroked-button routerLink="/benchmark" class="hero-ghost">
             Voir le benchmark
           </button>
@@ -48,9 +55,10 @@ import { TesterProgress } from '../../shared/models/tester.model';
       </div>
     </section>
 
-    <!-- MPI PREVIEW -->
-    @if (perf) {
     <div class="mich-container">
+
+      <!-- MPI PREVIEW — uniquement si connecté -->
+      @if (auth.isLoggedIn() && perf) {
       <section class="section">
         <app-section-eyebrow>Indice propriétaire</app-section-eyebrow>
         <div class="mpi-preview-card">
@@ -70,9 +78,35 @@ import { TesterProgress } from '../../shared/models/tester.model';
           </div>
         </div>
       </section>
+      }
 
-      <!-- TESTEUR PROMO -->
-      @if (tester) {
+      <!-- INVITE CONNEXION — si non connecté, à la place du MPI -->
+      @if (!auth.isLoggedIn()) {
+      <section class="section">
+        <div class="connect-invite">
+          <div class="tread-bg" aria-hidden="true"></div>
+          <div class="connect-invite-inner">
+            <div>
+              <p class="mpi-subtitle" style="color:rgba(212,231,250,0.9)">Michelin Performance Index</p>
+              <h2 class="on-dark">Connectez-vous pour voir votre score</h2>
+              <p class="mpi-desc">
+                Régularité, puissance estimée, gestion de l'effort et comportement pneu :
+                un score unique sur 1000, mis à jour à chaque sortie.
+              </p>
+              <button mat-raised-button color="accent" routerLink="/login" style="margin-top:1rem">
+                <mat-icon>login</mat-icon> Se connecter
+              </button>
+            </div>
+            <div class="mpi-ring-wrap" aria-hidden="true">
+              <app-mpi-ring [score]="0" [size]="140" />
+            </div>
+          </div>
+        </div>
+      </section>
+      }
+
+      <!-- TESTEUR PROMO — uniquement si connecté -->
+      @if (auth.isLoggedIn() && tester) {
       <section class="section">
         <div class="section-header">
           <div>
@@ -111,7 +145,7 @@ import { TesterProgress } from '../../shared/models/tester.model';
       </section>
       }
 
-      <!-- KPI COMMUNAUTÉ -->
+      <!-- KPI COMMUNAUTÉ — toujours visible -->
       @if (community) {
       <section class="section">
         <div class="section-header">
@@ -128,8 +162,8 @@ import { TesterProgress } from '../../shared/models/tester.model';
         </div>
       </section>
       }
+
     </div>
-    }
 
     <!-- FOOTER -->
     <footer class="app-footer">
@@ -239,7 +273,7 @@ import { TesterProgress } from '../../shared/models/tester.model';
     }
 
     // MPI PREVIEW CARD
-    .mpi-preview-card {
+    .mpi-preview-card, .connect-invite {
       position: relative;
       overflow: hidden;
       background: linear-gradient(135deg, #{$color-blue-700}, #{$color-dark-blue});
@@ -247,7 +281,7 @@ import { TesterProgress } from '../../shared/models/tester.model';
       padding: $space-6;
       box-shadow: $elevation-brand;
     }
-    .mpi-preview-grid {
+    .mpi-preview-grid, .connect-invite-inner {
       position: relative;
       z-index: 1;
       display: flex;
@@ -352,22 +386,29 @@ import { TesterProgress } from '../../shared/models/tester.model';
 export class LandingComponent implements OnInit {
   perf: PerformanceIndex | null = null;
   tester: TesterProgress | null = null;
-  community: any = null;
+  community: object | null = null;
 
   constructor(
+    protected auth: AuthService,
     private perfService: PerformanceService,
     private testerService: TesterService,
   ) {}
 
   ngOnInit() {
-    forkJoin({
-      perf: this.perfService.getIndex(),
-      tester: this.testerService.getProgress(),
-      community: this.perfService.getCommunityKpis(),
-    }).subscribe(({ perf, tester, community }) => {
-      this.perf = perf;
-      this.tester = tester;
+    // Les KPIs communauté sont publics — toujours chargés
+    this.perfService.getCommunityKpis().subscribe(community => {
       this.community = community;
     });
+
+    // Les données personnalisées ne sont chargées que si l'utilisateur est connecté
+    if (this.auth.isLoggedIn()) {
+      forkJoin({
+        perf: this.perfService.getIndex(),
+        tester: this.testerService.getProgress(),
+      }).subscribe(({ perf, tester }) => {
+        this.perf = perf;
+        this.tester = tester;
+      });
+    }
   }
 }

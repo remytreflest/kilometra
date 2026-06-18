@@ -1,42 +1,28 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { ApiService } from './api.service';
 import { PerformanceIndex } from '../../shared/models/performance.model';
 
-const USER_PERFORMANCE: PerformanceIndex = {
-  score: 742,
-  level: 'Compétiteur Expert',
-  monthlyDelta: +18,
-  weeklyKm: 412,
-  nationalRank: 214,
-  percentileBeat: 82,
-  history: [
-    { month: 'Jan', score: 646 },
-    { month: 'Fév', score: 664 },
-    { month: 'Mar', score: 686 },
-    { month: 'Avr', score: 704 },
-    { month: 'Mai', score: 724 },
-    { month: 'Juin', score: 742 },
-  ]
-};
-
-const COMMUNITY_KPI = {
-  activeCyclists: 25_000,
-  registeredClubs: 320,
-  analyzedKm: 1_800_000,
-  punctureReductionPct: 31,
-  weeklyKmGrowth: 62_000,
-  monthlyUserGrowth: 8,
-  monthlyClubGrowth: 14,
-};
+interface CommunityKpis {
+  activeCyclists: number;
+  registeredClubs: number;
+  analyzedKm: number;
+  punctureReductionPct: number;
+  weeklyKmGrowth: number;
+  monthlyUserGrowth: number;
+  monthlyClubGrowth: number;
+  avgRating?: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class PerformanceService {
+  constructor(private api: ApiService) {}
+
   getIndex(): Observable<PerformanceIndex> {
-    return of(USER_PERFORMANCE).pipe(delay(150));
+    return this.api.get<PerformanceIndex>('/performance/me');
   }
 
-  getCommunityKpis(): Observable<typeof COMMUNITY_KPI> {
-    return of(COMMUNITY_KPI).pipe(delay(200));
+  getCommunityKpis(): Observable<CommunityKpis> {
+    return this.api.get<CommunityKpis>('/performance/community');
   }
 }

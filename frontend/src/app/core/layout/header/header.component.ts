@@ -1,13 +1,15 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatMenuModule } from '@angular/material/menu';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink, MatIconModule, MatButtonModule, MatBadgeModule],
+  imports: [RouterLink, MatIconModule, MatButtonModule, MatBadgeModule, MatMenuModule],
   template: `
     <header class="app-header">
       <div class="mich-container header-inner">
@@ -16,12 +18,28 @@ import { MatBadgeModule } from '@angular/material/badge';
           <span class="brand-text">MICHELIN <span class="brand-sub">Performance</span></span>
         </a>
         <div class="header-actions">
-          <button mat-icon-button aria-label="Notifications" class="notif-btn">
-            <mat-icon [matBadge]="'3'" matBadgeColor="warn" matBadgeSize="small">notifications_none</mat-icon>
-          </button>
-          <a routerLink="/profil" class="header-avatar" aria-label="Mon profil — Camille Dubreuil">
-            CD
-          </a>
+          @if (auth.isLoggedIn()) {
+            <button mat-icon-button aria-label="Notifications" class="notif-btn">
+              <mat-icon [matBadge]="'3'" matBadgeColor="warn" matBadgeSize="small">notifications_none</mat-icon>
+            </button>
+            <button [matMenuTriggerFor]="userMenu" class="header-avatar" [attr.aria-label]="'Mon compte — ' + (auth.currentUser()?.firstName ?? '')">
+              {{ auth.initials() }}
+            </button>
+            <mat-menu #userMenu="matMenu" xPosition="before">
+              <button mat-menu-item routerLink="/profil">
+                <mat-icon>person</mat-icon>
+                <span>Mon profil</span>
+              </button>
+              <button mat-menu-item (click)="logout()">
+                <mat-icon>logout</mat-icon>
+                <span>Se déconnecter</span>
+              </button>
+            </mat-menu>
+          } @else {
+            <button mat-stroked-button routerLink="/login" class="login-btn">
+              <mat-icon>login</mat-icon> Se connecter
+            </button>
+          }
         </div>
       </div>
     </header>
@@ -120,6 +138,19 @@ import { MatBadgeModule } from '@angular/material/badge';
 
       &:hover { border-color: $color-blue-700; }
     }
+    .login-btn {
+      font-weight: $weight-semibold !important;
+      font-size: $text-small !important;
+      border-color: $color-blue-700 !important;
+      color: $color-blue-700 !important;
+    }
   `]
 })
-export class HeaderComponent {}
+export class HeaderComponent {
+  constructor(protected auth: AuthService, private router: Router) {}
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/accueil']);
+  }
+}

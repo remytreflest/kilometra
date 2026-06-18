@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { HeaderComponent } from './core/layout/header/header.component';
@@ -10,14 +10,18 @@ import { BottomNavComponent } from './core/layout/bottom-nav/bottom-nav.componen
   standalone: true,
   imports: [RouterOutlet, HeaderComponent, SidebarComponent, BottomNavComponent],
   template: `
-    <div class="app-shell">
-      <app-header />
-      <app-sidebar class="sidebar-desktop" />
-      <main class="main-content">
-        <router-outlet />
-      </main>
-      <app-bottom-nav class="bottom-nav-mobile" />
-    </div>
+    @if (showShell) {
+      <div class="app-shell">
+        <app-header />
+        <app-sidebar class="sidebar-desktop" />
+        <main class="main-content">
+          <router-outlet />
+        </main>
+        <app-bottom-nav class="bottom-nav-mobile" />
+      </div>
+    } @else {
+      <router-outlet />
+    }
   `,
   styles: [`
     .app-shell {
@@ -42,12 +46,16 @@ import { BottomNavComponent } from './core/layout/bottom-nav/bottom-nav.componen
     }
   `]
 })
-export class AppComponent implements OnInit {
-  constructor(private router: Router) {}
+export class AppComponent {
+  showShell = !window.location.pathname.startsWith('/login');
 
-  ngOnInit() {
+  constructor(private router: Router) {
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd)
-    ).subscribe(() => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }));
+    ).subscribe((e) => {
+      const nav = e as NavigationEnd;
+      this.showShell = !nav.urlAfterRedirects.startsWith('/login');
+      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    });
   }
 }
