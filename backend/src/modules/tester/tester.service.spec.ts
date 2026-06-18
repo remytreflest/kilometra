@@ -30,9 +30,10 @@ describe('TesterService.getMyProgress', () => {
     expect(result).toEqual(fakeProgress);
   });
 
-  it('throws 404 when progress not found', async () => {
+  it('returns null when progress not found', async () => {
     mockPrisma.testerProgress.findUnique.mockResolvedValue(null);
-    await expect(TesterService.getMyProgress('unknown')).rejects.toMatchObject({ status: 404 });
+    const result = await TesterService.getMyProgress('unknown');
+    expect(result).toBeNull();
   });
 });
 

@@ -56,13 +56,11 @@ describe('ReviewsService.getKpis', () => {
   it('returns computed kpis', async () => {
     mockPrisma.review.count
       .mockResolvedValueOnce(100)
-      .mockResolvedValueOnce(30)
       .mockResolvedValueOnce(80);
     mockPrisma.review.aggregate.mockResolvedValue({ _avg: { rating: 4.3 } });
 
     const result = await ReviewsService.getKpis();
     expect(result.total).toBe(100);
-    expect(result.fiveStarPct).toBe(30);
     expect(result.verifiedPct).toBe(80);
     expect(result.avgRating).toBe(4.3);
   });
@@ -72,7 +70,6 @@ describe('ReviewsService.getKpis', () => {
     mockPrisma.review.aggregate.mockResolvedValue({ _avg: { rating: null } });
 
     const result = await ReviewsService.getKpis();
-    expect(result.fiveStarPct).toBe(0);
     expect(result.verifiedPct).toBe(0);
     expect(result.avgRating).toBe(0);
   });

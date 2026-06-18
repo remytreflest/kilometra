@@ -5,6 +5,7 @@ jest.mock('../../config/database', () => ({
   default: {
     user: { findUnique: jest.fn(), update: jest.fn() },
     userBadge: { findMany: jest.fn() },
+    badge: { findMany: jest.fn() },
     reward: { findMany: jest.fn() },
   },
 }));
@@ -14,6 +15,7 @@ import prisma from '../../config/database';
 const mockPrisma = prisma as unknown as {
   user: { findUnique: jest.Mock; update: jest.Mock };
   userBadge: { findMany: jest.Mock };
+  badge: { findMany: jest.Mock };
   reward: { findMany: jest.Mock };
 };
 
@@ -73,5 +75,34 @@ describe('UsersService.getRewards', () => {
     mockPrisma.reward.findMany.mockResolvedValue(rewards);
     const result = await UsersService.getRewards('u1');
     expect(result).toEqual(rewards);
+  });
+});
+
+describe('UsersService.getAllBadgesWithStatus', () => {
+  const allBadges = [
+    { id: 'b1', label: 'Gold', icon: '🥇', color: '#FFD700' },
+    { id: 'b2', label: 'Silver', icon: '🥈', color: '#C0C0C0' },
+  ];
+
+  it('marks earned badges with unlocked:true and their earnedAt date', async () => {
+    const earnedAt = new Date('2024-01-01');
+    mockPrisma.badge.findMany.mockResolvedValue(allBadges);
+    mockPrisma.userBadge.findMany.mockResolvedValue([{ badgeId: 'b1', earnedAt }]);
+
+    const result = await UsersService.getAllBadgesWithStatus('u1');
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({ id: 'b1', unlocked: true, earnedAt });
+    expect(result[1]).toMatchObject({ id: 'b2', unlocked: false, earnedAt: null });
+  });
+
+  it('returns all badges as unlocked:false when user has no badges', async () => {
+    mockPrisma.badge.findMany.mockResolvedValue(allBadges);
+    mockPrisma.userBadge.findMany.mockResolvedValue([]);
+
+    const result = await UsersService.getAllBadgesWithStatus('u1');
+
+    expect(result.every((b) => b.unlocked === false)).toBe(true);
+    expect(result.every((b) => b.earnedAt === null)).toBe(true);
   });
 });
