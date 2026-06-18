@@ -9,7 +9,7 @@ export class WearService {
     });
   }
 
-  static async createWear(userId: string, data: { tireId: string; installedAt: string; currentKm: number; estimatedMaxKm: number }) {
+  static async createWear(userId: string, data: { tireId: string; installedAt: string; currentKm: number; estimatedMaxKm: number; position?: 'front' | 'rear' }) {
     const tire = await prisma.tire.findUnique({ where: { id: data.tireId } });
     if (!tire) throw Object.assign(new Error('Pneu introuvable'), { status: 404 });
     const wearPct = Math.round((data.currentKm / data.estimatedMaxKm) * 100);
@@ -20,6 +20,7 @@ export class WearService {
         tireId: data.tireId,
         tireRef: tire.reference,
         tireName: tire.name,
+        position: data.position ?? 'front',
         installedAt: new Date(data.installedAt),
         currentKm: data.currentKm,
         estimatedMaxKm: data.estimatedMaxKm,
