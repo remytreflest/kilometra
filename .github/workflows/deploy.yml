@@ -1,45 +1,259 @@
-name: API Deploy
+name: Deploy — michelin.qwaklab.fr
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - feature/rtr/front
+  workflow_dispatch:
+    inputs:
+      setup_nginx:
+        description: "Setup vhost Nginx + certificat SSL (premier déploiement uniquement)"
+        type: boolean
+        default: false
+
+# ──────────────────────────────────────────────────────────
+# SECRETS REQUIS dans GitHub → Settings → Secrets → Actions
+#   VPS_HOST            : IP ou hostname du VPS
+#   VPS_SSH_PRIVATE_KEY : Clé RSA privée (contenu complet)
+#   DB_PASSWORD         : Mot de passe PostgreSQL production
+#   JWT_SECRET          : Secret de signature JWT
+#   CERTBOT_EMAIL       : Email pour Let's Encrypt
+#   GHCR_PAT            : GitHub PAT avec scope "read:packages" (pour pull VPS)
+#
+# SECRETS pour le setup Nginx (requis uniquement si setup_nginx = true) :
+#   VPS_NGINX_CONF_DIR  : Chemin host vers le conf.d Nginx (valeur : /etc/nginx/conf.d)
+#
+# NOTE : Nginx tourne en service systemd sur ce VPS (pas en Docker).
+#        Certbot utilise le plugin --nginx natif (pas de webroot).
+#        VPS_NGINX_CONTAINER et VPS_CERTBOT_WEBROOT ne sont donc pas nécessaires.
+# ──────────────────────────────────────────────────────────
 
 jobs:
-  deploy:
-    name: Deploy API with migrations
+  # ──────────────────────────────────────────────────────────
+  # JOB 1 : BUILD & PUSH vers GitHub Container Registry
+  # ──────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push images
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_api: ${{ steps.names.outputs.api }}
+      image_frontend: ${{ steps.names.outputs.frontend }}
+      image_tag: ${{ github.sha }}
+
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+      - name: Normaliser les noms d'images (lowercase)
+        id: names
+        run: |
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "api=ghcr.io/${REPO}/api"         >> $GITHUB_OUTPUT
+          echo "frontend=ghcr.io/${REPO}/frontend" >> $GITHUB_OUTPUT
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          node-version: 20
-          cache: 'npm'
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install backend dependencies
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push image API
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ${{ steps.names.outputs.api }}:${{ github.sha }}
+            ${{ steps.names.outputs.api }}:latest
+
+      - name: Build & push image Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: |
+            ${{ steps.names.outputs.frontend }}:${{ github.sha }}
+            ${{ steps.names.outputs.frontend }}:latest
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 2 : DÉPLOIEMENT sur le VPS
+  # ──────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurer la clé SSH
         run: |
-          cd backend
-          npm ci
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Build backend
+      # ─────────────────────────────────────────────────────
+      # INIT DOCKER SWARM (idempotent)
+      # ─────────────────────────────────────────────────────
+      - name: Initialiser Docker Swarm
         run: |
-          cd backend
-          npm run build
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} '
+            STATE=$(docker info --format "{{.Swarm.LocalNodeState}}" 2>/dev/null || echo "inactive")
+            if [ "$STATE" != "active" ]; then
+              MAIN_IP=$(ip route get 1.1.1.1 | awk "{print \$7; exit}")
+              docker swarm init --advertise-addr "$MAIN_IP"
+              echo "✅ Swarm initialisé sur $MAIN_IP"
+            else
+              echo "✅ Swarm déjà actif"
+            fi
+          '
 
-      # - name: Deploy to VPS
-      #   if: github.event_name == 'push'
-      #   uses: appleboy/ssh-action@v0.1.7
-      #   with:
-      #     host: ${{ secrets.VPS_HOST }}
-      #     username: ${{ secrets.VPS_USER }}
-      #     key: ${{ secrets.VPS_SSH_KEY }}
-      #     script: |
-      #       cd ${{ secrets.DEPLOY_PATH }}
-      #       docker compose pull
-      #       docker compose up -d
-      #       docker exec api npx prisma migrate deploy
+      # ─────────────────────────────────────────────────────
+      # PRÉPARATION DU RÉPERTOIRE DE DÉPLOIEMENT
+      # ─────────────────────────────────────────────────────
+      - name: Créer le répertoire de déploiement
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} \
+            "mkdir -p /opt/stacks/michelin"
+
+      - name: Uploader docker-compose.prod.yml
+        run: |
+          scp -i ~/.ssh/deploy_key docker-compose.prod.yml \
+            root@${{ secrets.VPS_HOST }}:/opt/stacks/michelin/docker-compose.yml
+
+      # ─────────────────────────────────────────────────────
+      # GÉNÉRATION DU FICHIER .ENV (jamais loggué)
+      # ─────────────────────────────────────────────────────
+      - name: Générer et uploader .env
+        env:
+          DB_PASSWORD:      ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET:       ${{ secrets.JWT_SECRET }}
+          IMAGE_API:        "${{ needs.build-and-push.outputs.image_api }}:${{ github.sha }}"
+          IMAGE_FRONTEND:   "${{ needs.build-and-push.outputs.image_frontend }}:${{ github.sha }}"
+        run: |
+          printf 'DATABASE_URL=postgresql://postgres:%s@postgres:5432/app_db\n' "${DB_PASSWORD}"  > /tmp/michelin.env
+          printf 'JWT_SECRET=%s\n'                                               "${JWT_SECRET}"   >> /tmp/michelin.env
+          printf 'NODE_ENV=production\n'                                                           >> /tmp/michelin.env
+          printf 'POSTGRES_USER=postgres\n'                                                        >> /tmp/michelin.env
+          printf 'POSTGRES_PASSWORD=%s\n'                                         "${DB_PASSWORD}" >> /tmp/michelin.env
+          printf 'POSTGRES_DB=app_db\n'                                                            >> /tmp/michelin.env
+          printf 'IMAGE_API=%s\n'                                                 "${IMAGE_API}"    >> /tmp/michelin.env
+          printf 'IMAGE_FRONTEND=%s\n'                                            "${IMAGE_FRONTEND}" >> /tmp/michelin.env
+
+          scp -i ~/.ssh/deploy_key /tmp/michelin.env \
+            root@${{ secrets.VPS_HOST }}:/opt/stacks/michelin/.env
+          rm /tmp/michelin.env
+
+      # ─────────────────────────────────────────────────────
+      # LOGIN GHCR SUR LE VPS (pour le pull des images privées)
+      # ─────────────────────────────────────────────────────
+      - name: Login GHCR sur le VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} \
+            "echo '${{ secrets.GHCR_PAT }}' | docker login ghcr.io -u ${{ github.actor }} --password-stdin"
+
+      # ─────────────────────────────────────────────────────
+      # DOCKER STACK DEPLOY
+      # ─────────────────────────────────────────────────────
+      - name: Déployer le stack michelin
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} '
+            set -a
+            source /opt/stacks/michelin/.env
+            set +a
+            docker stack deploy \
+              --compose-file /opt/stacks/michelin/docker-compose.yml \
+              --with-registry-auth \
+              michelin
+          '
+
+      # ─────────────────────────────────────────────────────
+      # SETUP NGINX + SSL — premier déploiement uniquement
+      # Déclenché manuellement via workflow_dispatch + setup_nginx=true
+      # ─────────────────────────────────────────────────────
+      - name: "[Setup] Uploader vhost HTTP-only (avant cert)"
+        if: github.event.inputs.setup_nginx == 'true'
+        run: |
+          scp -i ~/.ssh/deploy_key \
+            deploy/nginx/michelin.qwaklab.fr-init.conf \
+            root@${{ secrets.VPS_HOST }}:${{ secrets.VPS_NGINX_CONF_DIR }}/michelin.qwaklab.fr.conf
+
+      - name: "[Setup] Recharger Nginx (HTTP only)"
+        if: github.event.inputs.setup_nginx == 'true'
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} \
+            "nginx -t && systemctl reload nginx"
+
+      - name: "[Setup] Obtenir certificat Let's Encrypt"
+        if: github.event.inputs.setup_nginx == 'true'
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} '
+            if [ ! -d "/etc/letsencrypt/live/michelin.qwaklab.fr" ]; then
+              certbot certonly \
+                --nginx \
+                -d michelin.qwaklab.fr \
+                --email ${{ secrets.CERTBOT_EMAIL }} \
+                --agree-tos \
+                --non-interactive
+              echo "✅ Certificat obtenu"
+            else
+              echo "✅ Certificat déjà existant"
+            fi
+          '
+
+      - name: "[Setup] Uploader vhost HTTPS final"
+        if: github.event.inputs.setup_nginx == 'true'
+        run: |
+          scp -i ~/.ssh/deploy_key \
+            deploy/nginx/michelin.qwaklab.fr.conf \
+            root@${{ secrets.VPS_HOST }}:${{ secrets.VPS_NGINX_CONF_DIR }}/michelin.qwaklab.fr.conf
+
+      - name: "[Setup] Recharger Nginx (HTTPS activé)"
+        if: github.event.inputs.setup_nginx == 'true'
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} \
+            "nginx -t && systemctl reload nginx"
+
+      # ─────────────────────────────────────────────────────
+      # HEALTH CHECK
+      # ─────────────────────────────────────────────────────
+      - name: Health check
+        run: |
+          echo "Attente du démarrage des services (30s)..."
+          sleep 30
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} \
+            "curl -sf http://localhost:8080/api/health || (echo '❌ Health check échoué' && exit 1)"
+          echo "✅ Stack michelin opérationnel"
+
+      # ─────────────────────────────────────────────────────
+      # RÉSUMÉ
+      # ─────────────────────────────────────────────────────
+      - name: Résumé du déploiement
+        if: always()
+        run: |
+          {
+            echo "## Déploiement — michelin.qwaklab.fr"
+            echo ""
+            echo "| Champ | Valeur |"
+            echo "|---|---|"
+            echo "| **URL** | https://michelin.qwaklab.fr |"
+            echo "| **Image API** | \`${{ needs.build-and-push.outputs.image_api }}:${{ github.sha }}\` |"
+            echo "| **Image Frontend** | \`${{ needs.build-and-push.outputs.image_frontend }}:${{ github.sha }}\` |"
+            echo "| **Branche** | \`${{ github.ref_name }}\` |"
+            echo "| **Commit** | \`${{ github.sha }}\` |"
+          } >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,119 @@
+// ============================================================
+// MICHELIN DESIGN SYSTEM — COLORS
+// ============================================================
+
+// --- Primaires ---
+$color-blue:   #27509B;
+$color-yellow: #FCE500;
+$color-white:  #FFFFFF;
+$color-black:  #000000;
+
+// --- Déclinaisons bleues (clair → sombre) ---
+$color-blue-100: #D4E7FA;
+$color-blue-200: #C1D6EF;
+$color-blue-300: #AEC5E5;
+$color-blue-400: #87A4D0;
+$color-blue-500: #6182BB;
+$color-blue-600: #3A61A6;
+$color-blue-700: #27509B;
+
+// --- Déclinaisons jaunes ---
+$color-yellow-100: #FEFCCB;
+$color-yellow-200: #FEF984;
+$color-yellow-300: #FEF79E;
+$color-yellow-400: #FDF271;
+$color-yellow-500: #FDED44;
+$color-yellow-600: #FCE817;
+$color-yellow-700: #FCE500;
+
+// --- Secondaires ---
+$color-dark-blue: #00205B;
+$color-midnight:  #000C34;
+$color-green:     #84BD00;
+$color-grey:      #53565A;
+$color-purple:    #582C83;
+
+// --- États ---
+$color-success: #2E7D32;
+$color-warning: #F9A825;
+$color-danger:  #B71C1C;
+
+// --- Neutres ---
+$color-grey-50:  #F7F7F8;
+$color-grey-100: #EEEFF1;
+$color-grey-200: #E2E4E7;
+$color-grey-300: #C9CCD1;
+$color-grey-400: #9DA1A8;
+$color-grey-500: #53565A;
+$color-grey-600: #3D4045;
+$color-grey-700: #2A2C30;
+
+// --- Surfaces sémantiques ---
+$surface-app:     $color-grey-50;
+$surface-card:    $color-white;
+$surface-inverse: $color-midnight;
+$surface-brand:   $color-blue-700;
+
+// --- Textes sémantiques ---
+$text-primary:   $color-midnight;
+$text-secondary: $color-grey-500;
+$text-on-brand:  $color-white;
+$text-on-yellow: $color-midnight;
+
+// --- Bordure ---
+$border-subtle: $color-grey-200;
+
+// --- CSS Custom Properties (pour usage dans les templates) ---
+:root {
+  --color-blue:        #{$color-blue};
+  --color-yellow:      #{$color-yellow};
+  --color-white:       #{$color-white};
+  --color-black:       #{$color-black};
+
+  --color-blue-100:    #{$color-blue-100};
+  --color-blue-200:    #{$color-blue-200};
+  --color-blue-300:    #{$color-blue-300};
+  --color-blue-400:    #{$color-blue-400};
+  --color-blue-500:    #{$color-blue-500};
+  --color-blue-600:    #{$color-blue-600};
+  --color-blue-700:    #{$color-blue-700};
+
+  --color-yellow-100:  #{$color-yellow-100};
+  --color-yellow-200:  #{$color-yellow-200};
+  --color-yellow-300:  #{$color-yellow-300};
+  --color-yellow-400:  #{$color-yellow-400};
+  --color-yellow-500:  #{$color-yellow-500};
+  --color-yellow-600:  #{$color-yellow-600};
+  --color-yellow-700:  #{$color-yellow-700};
+
+  --color-dark-blue:   #{$color-dark-blue};
+  --color-midnight:    #{$color-midnight};
+  --color-green:       #{$color-green};
+  --color-grey:        #{$color-grey};
+  --color-purple:      #{$color-purple};
+
+  --color-success:     #{$color-success};
+  --color-warning:     #{$color-warning};
+  --color-danger:      #{$color-danger};
+
+  --color-grey-50:     #{$color-grey-50};
+  --color-grey-100:    #{$color-grey-100};
+  --color-grey-200:    #{$color-grey-200};
+  --color-grey-300:    #{$color-grey-300};
+  --color-grey-400:    #{$color-grey-400};
+  --color-grey-500:    #{$color-grey-500};
+  --color-grey-600:    #{$color-grey-600};
+  --color-grey-700:    #{$color-grey-700};
+
+  --surface-app:       #{$surface-app};
+  --surface-card:      #{$surface-card};
+  --surface-inverse:   #{$surface-inverse};
+  --surface-brand:     #{$surface-brand};
+
+  --text-primary:      #{$text-primary};
+  --text-secondary:    #{$text-secondary};
+  --text-on-brand:     #{$text-on-brand};
+  --text-on-yellow:    #{$text-on-yellow};
+
+  --border-subtle:     #{$border-subtle};
+}

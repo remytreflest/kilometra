@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"c:\\\\Users\\\\mrtre\\\\source\\\\HACKTHON\\\\Michelin\\\\frontend\\\\src\" -Recurse | Select-Object FullName | Where-Object { $_.FullName -notmatch 'node_modules' })",
+      "PowerShell($proc = Get-NetTCPConnection -LocalPort 4200 -ErrorAction SilentlyContinue | Select-Object -First 1; if \\($proc\\) { Stop-Process -Id $proc.OwningProcess -Force -ErrorAction SilentlyContinue; Write-Host \"Killed PID $\\($proc.OwningProcess\\)\" } else { Write-Host \"Port 4200 free\" })",
+      "Bash(pg_isready -h localhost -p 5432)",
+      "PowerShell(Start-Process \"docker\" -ArgumentList \"compose\", \"-f\", \"c:\\\\Users\\\\mrtre\\\\source\\\\HACKTHON\\\\Michelin\\\\docker-compose.yml\", \"up\", \"-d\", \"postgres\" -Wait -PassThru)",
+      "WebFetch(domain:www.prisma.io)",
+      "Bash(xargs grep -l \"HttpClient\\\\|http\\\\|API\")",
+      "PowerShell(Invoke-RestMethod -Uri \"http://localhost:3000/api/tires/michelin\")",
+      "PowerShell(docker exec hackathon_api ls dist/modules/tires/ 2>&1)",
+      "PowerShell(docker exec hackathon_api ls dist/ 2>&1)",
+      "PowerShell(docker exec hackathon_api ls dist/modules/ 2>&1)",
+      "Bash(docker-compose down *)",
+      "Bash(docker-compose build *)",
+      "Bash(docker-compose up *)",
+      "Bash(node -e \"const pkg = require\\('./package.json'\\); console.log\\('express:', pkg.dependencies.express\\);\")",
+      "Bash(docker exec *)",
+      "Bash(docker-compose exec *)",
+      "Bash(docker-compose stop *)",
+      "Read(//c/Users/mrtre/source/qwaklab-infra/.github/workflows/**)",
+      "WebSearch",
+      "WebFetch(domain:docs.github.com)"
+    ]
+  }
+}

@@ -1,0 +1,127 @@
+// ============================================================
+// MICHELIN — ANGULAR MATERIAL THEME (Material 18 / M2 API)
+// ============================================================
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+// --- Palette primaire : Michelin Blue ---
+$michelin-primary-palette: (
+  50:   #E3EBF5,
+  100:  #BAD0E8,
+  200:  #8DB2D8,
+  300:  #5F94C8,
+  400:  #3D7DBD,
+  500:  #27509B,
+  600:  #224A93,
+  700:  #1B4189,
+  800:  #14387F,
+  900:  #0A2868,
+  A100: #9DB8FF,
+  A200: #6A94FF,
+  A400: #3770FF,
+  A700: #1D5EFF,
+  contrast: (
+    50:   #000C34,
+    100:  #000C34,
+    200:  #000C34,
+    300:  #000C34,
+    400:  #ffffff,
+    500:  #ffffff,
+    600:  #ffffff,
+    700:  #ffffff,
+    800:  #ffffff,
+    900:  #ffffff,
+    A100: #000C34,
+    A200: #000C34,
+    A400: #ffffff,
+    A700: #ffffff,
+  )
+);
+
+// --- Palette accent : Michelin Yellow ---
+$michelin-accent-palette: (
+  50:   #FFFDE7,
+  100:  #FFF9C4,
+  200:  #FFF59D,
+  300:  #FFF176,
+  400:  #FFEE58,
+  500:  #FCE500,
+  600:  #FCE500,
+  700:  #F9A825,
+  800:  #F57F17,
+  900:  #E65100,
+  A100: #FFFF8D,
+  A200: #FCE500,
+  A400: #FFD600,
+  A700: #FFAB00,
+  contrast: (
+    50:   #000C34,
+    100:  #000C34,
+    200:  #000C34,
+    300:  #000C34,
+    400:  #000C34,
+    500:  #000C34,
+    600:  #000C34,
+    700:  #000C34,
+    800:  #000C34,
+    900:  #ffffff,
+    A100: #000C34,
+    A200: #000C34,
+    A400: #000C34,
+    A700: #000C34,
+  )
+);
+
+// --- Palette warn : Danger ---
+$michelin-warn-palette: (
+  50:   #FFEBEE,
+  100:  #FFCDD2,
+  200:  #EF9A9A,
+  300:  #E57373,
+  400:  #EF5350,
+  500:  #B71C1C,
+  600:  #E53935,
+  700:  #D32F2F,
+  800:  #C62828,
+  900:  #B71C1C,
+  contrast: (
+    50:   #B71C1C,
+    100:  #B71C1C,
+    200:  #B71C1C,
+    300:  #ffffff,
+    400:  #ffffff,
+    500:  #ffffff,
+    600:  #ffffff,
+    700:  #ffffff,
+    800:  #ffffff,
+    900:  #ffffff,
+  )
+);
+
+// Material 18 : APIs M2 sous le préfixe mat.m2-*
+$michelin-primary: mat.m2-define-palette($michelin-primary-palette, 700);
+$michelin-accent:  mat.m2-define-palette($michelin-accent-palette, 500);
+$michelin-warn:    mat.m2-define-palette($michelin-warn-palette, 900);
+
+$michelin-theme: mat.m2-define-light-theme((
+  color: (
+    primary: $michelin-primary,
+    accent:  $michelin-accent,
+    warn:    $michelin-warn,
+  ),
+  typography: mat.m2-define-typography-config(
+    $font-family: 'Noto Sans, sans-serif',
+    $headline-1: mat.m2-define-typography-level(2rem, 1.12, 900, 'Montserrat, sans-serif'),
+    $headline-2: mat.m2-define-typography-level(1.875rem, 1.16, 800, 'Montserrat, sans-serif'),
+    $headline-3: mat.m2-define-typography-level(1.75rem, 1.2, 800, 'Montserrat, sans-serif'),
+    $headline-4: mat.m2-define-typography-level(1.25rem, 1.25, 700, 'Montserrat, sans-serif'),
+    $body-1:     mat.m2-define-typography-level(1rem, 1.5, 400),
+    $body-2:     mat.m2-define-typography-level(0.875rem, 1.5, 400),
+    $caption:    mat.m2-define-typography-level(0.75rem, 1.5, 400),
+    $button:     mat.m2-define-typography-level(0.875rem, 1, 700, 'Noto Sans, sans-serif', 0.02em),
+  ),
+  density: 0,
+));
+
+@include mat.all-component-themes($michelin-theme);
