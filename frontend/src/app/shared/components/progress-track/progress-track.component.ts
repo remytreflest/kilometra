@@ -1,16 +1,16 @@
 import { Component, Input } from '@angular/core';
+import { NgClass } from '@angular/common';
 
 export type ProgressVariant = 'blue' | 'yellow' | 'green' | 'red';
 
 @Component({
   selector: 'app-progress-track',
   standalone: true,
+  imports: [NgClass],
   template: `
     <div class="track" [style.height]="height + 'px'">
       <div
-        class="fill"
-        [class]="'fill-' + variant"
-        [class.tread]="tread"
+        [ngClass]="['fill', 'fill-' + variant, tread ? 'tread' : '']"
         [style.width]="value + '%'"
       ></div>
     </div>
