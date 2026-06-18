@@ -7,10 +7,259 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Todo {
-  id        String   @id @default(cuid())
-  title     String
-  done      Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TireCategory {
+  route
+  competition
+  endurance
+  gravel
+}
+
+enum StockStatus {
+  available
+  limited
+  order
+}
+
+enum ReviewType {
+  user
+  influencer
+}
+
+model User {
+  id               String            @id @default(cuid())
+  firstName        String
+  lastName         String
+  email            String            @unique
+  password         String
+  role             Role              @default(USER)
+  memberSince      DateTime          @default(now())
+  level            String            @default("Débutant")
+  stravaConnected  Boolean           @default(false)
+  clubId           String?
+  club             Club?             @relation(fields: [clubId], references: [id])
+  badges           UserBadge[]
+  rewards          Reward[]
+  activities       Activity[]
+  tireWears        TireWear[]
+  reviews          Review[]
+  performanceIndex PerformanceIndex?
+  testerProgress   TesterProgress?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model Badge {
+  id         String      @id @default(cuid())
+  label      String
+  icon       String
+  color      String
+  userBadges UserBadge[]
+}
+
+model UserBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id])
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+}
+
+model Reward {
+  id         String    @id @default(cuid())
+  userId     String
+  type       String
+  code       String    @unique
+  validUntil DateTime
+  usedAt     DateTime?
+  user       User      @relation(fields: [userId], references: [id])
+  createdAt  DateTime  @default(now())
+}
+
+model Club {
+  id                   String   @id @default(cuid())
+  name                 String
+  region               String
+  department           String
+  memberCount          Int      @default(0)
+  totalKm              Float    @default(0)
+  monthlyKm            Float    @default(0)
+  monthlyKmDelta       Float    @default(0)
+  rank                 Int
+  rankDelta            Int      @default(0)
+  michelinEquipmentPct Float    @default(0)
+  badges               Json     @default("[]")
+  members              User[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Tire {
+  id                   String           @id @default(cuid())
+  reference            String           @unique
+  name                 String
+  brand                String           @default("Michelin")
+  category             TireCategory
+  adhesion             Float
+  efficiency           Float
+  comfort              Float
+  punctureResistance   Float
+  durability           Float
+  avgScore             Float
+  communityKm          Int              @default(0)
+  punctureReductionPct Float            @default(0)
+  recommendedFor       String[]
+  priceEur             Float
+  wears                TireWear[]
+  terrainPerf          TireTerrainPerf?
+  createdAt            DateTime         @default(now())
+}
+
+model TireWear {
+  id             String   @id @default(cuid())
+  userId         String
+  tireId         String
+  tireRef        String
+  tireName       String
+  installedAt    DateTime
+  currentKm      Float
+  estimatedMaxKm Float
+  wearPct        Float
+  status         String
+  user           User     @relation(fields: [userId], references: [id])
+  tire           Tire     @relation(fields: [tireId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  date        DateTime
+  distanceKm  Float
+  elevationM  Float
+  avgSpeedKmh Float
+  maxSpeedKmh Float
+  durationMin Int
+  type        String
+  location    String
+  mpiImpact   Float
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Dealer {
+  id            String      @id @default(cuid())
+  name          String
+  address       String
+  city          String
+  postalCode    String
+  isOpen        Boolean     @default(false)
+  openingTime   String
+  closingTime   String
+  acceptsCoupon Boolean     @default(false)
+  stockStatus   StockStatus @default(available)
+  phone         String
+  lat           Float
+  lng           Float
+  createdAt     DateTime    @default(now())
+}
+
+model Review {
+  id               String     @id @default(cuid())
+  authorId         String
+  authorName       String
+  authorInitials   String
+  kmWithTire       Float
+  rating           Int
+  comment          String
+  isVerified       Boolean    @default(false)
+  date             DateTime
+  type             ReviewType @default(user)
+  tireRef          String
+  sponsoredContent String?
+  followerCount    Int?
+  platform         String?
+  author           User       @relation(fields: [authorId], references: [id])
+  createdAt        DateTime   @default(now())
+}
+
+model PerformanceIndex {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  score          Float
+  level          String
+  monthlyDelta   Float
+  weeklyKm       Float
+  nationalRank   Int
+  percentileBeat Float
+  history        Json     @default("[]")
+  user           User     @relation(fields: [userId], references: [id])
+  updatedAt      DateTime @updatedAt
+}
+
+model TesterProgress {
+  id              String         @id @default(cuid())
+  userId          String         @unique
+  currentKm       Float
+  nextMilestoneKm Float
+  progressPct     Float
+  couponCode      String
+  couponExpiry    DateTime
+  totalTesters    Int
+  rank            Int
+  user            User           @relation(fields: [userId], references: [id])
+  rewards         TesterReward[]
+  updatedAt       DateTime       @updatedAt
+}
+
+model TesterReward {
+  id               String         @id @default(cuid())
+  testerProgressId String
+  label            String
+  description      String
+  status           String
+  unlockedAt       DateTime?
+  testerProgress   TesterProgress @relation(fields: [testerProgressId], references: [id])
+}
+
+model RegionCoverage {
+  id            String @id @default(cuid())
+  region        String
+  department    String
+  totalCyclists Int
+  michelinUsers Int
+  coveragePct   Float
+  growthPct     Float
+}
+
+model TireTerrainPerf {
+  id              String  @id @default(cuid())
+  tireRef         String  @unique
+  tireName        String
+  tireId          String? @unique
+  mountain        Float
+  coastal         Float
+  plain           Float
+  wet             Float
+  avgRating       Float
+  totalKmAnalyzed Int
+  tire            Tire?   @relation(fields: [tireId], references: [id])
+}
+
+model AdminKpi {
+  id            String  @id @default(cuid())
+  label         String
+  value         String
+  delta         String
+  deltaPositive Boolean @default(true)
+  icon          String
 }
