@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AuthController } from './auth.controller';
 import { authMiddleware } from '../../middlewares/auth.middleware';
 import { validate } from '../../middlewares/validate.middleware';
+import { asyncHandler } from '../../utils/asyncHandler';
 
 const router = Router();
 
@@ -18,9 +19,9 @@ const registerSchema = z.object({
   password: z.string().min(6, 'Mot de passe trop court (min 6 caractères)'),
 });
 
-router.post('/login', validate(loginSchema), AuthController.login);
-router.post('/register', validate(registerSchema), AuthController.register);
-router.post('/logout', authMiddleware, AuthController.logout);
-router.get('/me', authMiddleware, AuthController.me);
+router.post('/login', validate(loginSchema), asyncHandler(AuthController.login));
+router.post('/register', validate(registerSchema), asyncHandler(AuthController.register));
+router.post('/logout', authMiddleware, asyncHandler(AuthController.logout));
+router.get('/me', authMiddleware, asyncHandler(AuthController.me));
 
 export default router;

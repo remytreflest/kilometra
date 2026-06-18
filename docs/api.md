@@ -152,13 +152,23 @@ Ce endpoint est utilisé par Docker Compose pour le `healthcheck` du container `
 ```dockerfile
 # Multi-stage build
 # Stage 1 : compile TypeScript → dist/
-# Stage 2 : image légère node:20-alpine, copie dist/ + node_modules + prisma/
-CMD ["node", "dist/main.js"]
+# Stage 2 : image légère node:20-bullseye-slim, copie dist/ + node_modules + prisma/
+ENTRYPOINT ["./docker-entrypoint.sh"]   # migrate deploy + seed conditionnel + node dist/main.js
 ```
 
-La migration Prisma est lancée automatiquement en CI/CD après le déploiement :
+Le container `api` dépend de `postgres` avec `condition: service_healthy`.
+`docker-entrypoint.sh` automatise au démarrage :
+
 ```bash
-docker exec api npx prisma migrate deploy
+npx prisma migrate deploy          # applique les migrations en attente (idempotent)
+# si DB vide → node prisma/seed.js
+node dist/main.js                  # démarre l'application
+```
+
+Pour forcer un reseed complet :
+```bash
+docker-compose exec postgres psql -U postgres -c "DROP DATABASE app_db; CREATE DATABASE app_db;"
+docker-compose restart api
 ```
 
 ---
@@ -168,7 +178,7 @@ docker exec api npx prisma migrate deploy
 Le backend est couvert par une action GitHub située dans `.github/workflows/test.yml`.
 Cette workflow installe les dépendances backend, construit le projet et exécute les tests unitaires.
 
-Le déploiement est prévu dans `.github/workflows/deploy.yml` et doit inclure le lancement des migrations avec `npx prisma migrate deploy` sur le serveur cible.
+Le déploiement (`docker-compose up --build`) inclut automatiquement les migrations et le seed via `docker-entrypoint.sh`. Aucune commande manuelle post-déploiement n'est requise.
 
 ---
 

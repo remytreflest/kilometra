@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { WearController } from './wear.controller';
 import { authMiddleware } from '../../middlewares/auth.middleware';
 import { validate } from '../../middlewares/validate.middleware';
+import { asyncHandler } from '../../utils/asyncHandler';
 
 const router = Router();
 
@@ -18,8 +19,8 @@ const updateSchema = z.object({
 });
 
 router.use(authMiddleware);
-router.get('/', WearController.getAll);
-router.post('/', validate(createSchema), WearController.create);
-router.patch('/:id', validate(updateSchema), WearController.update);
+router.get('/', asyncHandler(WearController.getAll));
+router.post('/', validate(createSchema), asyncHandler(WearController.create));
+router.patch('/:id', validate(updateSchema), asyncHandler(WearController.update));
 
 export default router;

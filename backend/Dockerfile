@@ -17,13 +17,15 @@ RUN npm prune --production || true
 
 FROM node:20-bullseye-slim
 WORKDIR /app
-RUN apt-get update && apt-get install -y libssl1.1 ca-certificates --no-install-recommends && rm -rf /var/lib/apt/lists/* || true
+RUN apt-get update && apt-get install -y libssl1.1 ca-certificates curl --no-install-recommends && rm -rf /var/lib/apt/lists/* || true
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY package*.json ./
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh
 
 ENV NODE_ENV=production
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
