@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/rtr/front
   workflow_dispatch:
     inputs:
       setup_nginx:
