@@ -1,11 +1,10 @@
 name: Deploy — michelin.qwaklab.fr
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    branches: [main]
-    types:
-      - completed
+  push:
+    branches:
+      - main
+      - feature/rtr/front
   workflow_dispatch:
     inputs:
       setup_nginx:
@@ -37,7 +36,6 @@ jobs:
   build-and-push:
     name: Build & Push images
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: read
       packages: write
